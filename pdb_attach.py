@@ -1,9 +1,17 @@
 # -*- mode: python -*-
 """pdb-attach is a python debugger that can attach to running processes."""
+import os
 import pdb
+import signal
+import socket
+import sys
+from types import FrameType
 
 
 __version__ = "0.0.1dev"
+
+
+_original_handler = signal.getsignal(signal.SIGUSR2)
 
 
 class PdbDetach(pdb.Pdb):
@@ -28,5 +36,37 @@ class PdbDetach(pdb.Pdb):
         return True
 
 
+def _handler(signum: int, frame: FrameType) -> None:  # pylint: disable=unused-argument
+    """Start the debugger.
+
+    Meant to be called from a signal handler.
+    """
+    sock = socket.socket()
+    sock.bind(("", 50007))
+    sock.listen(1)
+    serv, _ = sock.accept()
+    sf = serv.makefile("rwb")   # pylint: disable=invalid-name
+    PdbDetach(stdin=sf, stdout=sf).set_trace(frame)
+
+
+def listen() -> None:
+    """Initializes the handler to start a debugging session."""
+    signal.signal(signal.SIGUSR2, _handler)
+
+
+def unlisten() -> None:
+    """Stops listening."""
+    if signal.getsignal(signal.SIGUSR2) is _handler:
+        signal.signal(signal.SIGUSR2, _original_handler)
+
+
 if __name__ == "__main__":
-    pass
+    os.kill(sys.argv[1], signal.SIGUSR2)
+    client = socket.create_connection(("", 50007))
+    cf = client.makefile("rwb")
+
+    while True:
+        line = cf.readline()
+        if line == "":
+            break
+        cf.write(input(line))

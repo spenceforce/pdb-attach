@@ -2,10 +2,12 @@
 """pdb-attach tests."""
 import io
 import os
+import signal
+import subprocess
 import sys
-import pytest  # pylint: disable=unused-import
+import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import pdb_attach  # pylint: disable=wrong-import-position
 
 
@@ -36,3 +38,18 @@ def test_correct_detach_line():
     debugger.set_trace()
     val = 2
     assert val == 1
+
+
+def test_signal_set():
+    pdb_attach.listen()
+    assert signal.getsignal(signal.SIGUSR2) is pdb_attach._handler
+    pdb_attach.unlisten()
+    assert signal.getsignal(signal.SIGUSR2) is not pdb_attach._handler
+
+
+def test_end_to_end():
+    curdir = os.getcwd()
+    os.chdir('test')
+    proc = subprocess.run("./end_to_end.sh", shell=True)
+    assert proc.returncode == 0
+    os.chdir(curdir)
