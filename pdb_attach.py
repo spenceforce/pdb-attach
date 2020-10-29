@@ -1,11 +1,12 @@
 # -*- mode: python -*-
 """pdb-attach is a python debugger that can attach to running processes."""
+import argparse
 import os
 import pdb
 import signal
 import socket
-import sys
 from types import FrameType
+from typing import Any, Callable, List
 
 
 __version__ = "0.0.1dev"
@@ -21,6 +22,10 @@ class PdbDetach(pdb.Pdb):
     # stdin and stdout.
     use_rawinput = False
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self._precmd_handlers: List[Callable[[str], str]] = []
+
     def do_detach(self, arg: str) -> bool:  # pylint: disable=unused-argument
         """Detach the debugger and continue running."""
         # A couple notes:
@@ -35,6 +40,26 @@ class PdbDetach(pdb.Pdb):
         self._set_stopinfo(None, None, -1)  # type: ignore
         return True
 
+    def precmd(self, line: str) -> str:
+        """Executed by the Cmd parent class before interpreting the command.
+
+        Multiple handlers can act on the line, with each handler receiving the
+        line returned from the previous handler. In this way the line flows
+        through a chain of handlers.
+        """
+        for handler in self._precmd_handlers:
+            line = handler(line)
+
+        # After doing preprocessing, pass it off to the super class(es) for
+        # whatever they want to do with it.
+        line = super().precmd(line)
+
+        return line
+
+    def attach_precmd_handler(self, handler: Callable[[str], str]) -> None:
+        """Attach a handler to be run in the precmd hook."""
+        self._precmd_handlers.append(handler)
+
 
 def _handler(signum: int, frame: FrameType) -> None:  # pylint: disable=unused-argument
     """Start the debugger.
@@ -42,10 +67,10 @@ def _handler(signum: int, frame: FrameType) -> None:  # pylint: disable=unused-a
     Meant to be called from a signal handler.
     """
     sock = socket.socket()
-    sock.bind(("", 50007))
+    sock.bind(("localhost", 50007))
     sock.listen(1)
     serv, _ = sock.accept()
-    sf = serv.makefile("rwb")   # pylint: disable=invalid-name
+    sf = serv.makefile("rwb", buffering=0)  # pylint: disable=invalid-name
     PdbDetach(stdin=sf, stdout=sf).set_trace(frame)
 
 
@@ -61,9 +86,15 @@ def unlisten() -> None:
 
 
 if __name__ == "__main__":
-    os.kill(sys.argv[1], signal.SIGUSR2)
-    client = socket.create_connection(("", 50007))
-    cf = client.makefile("rwb")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "pid", type=int, metavar="PID", help="The pid of the process to debug."
+    )
+    cl_args = parser.parse_args()
+
+    os.kill(cl_args.pid, signal.SIGUSR2)
+    client = socket.create_connection(("localhost", 50007))
+    cf = client.makefile("rwb", buffering=0)
 
     while True:
         line = cf.readline()
