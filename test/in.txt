@@ -1,4 +1,3 @@
-printable_value = "modified in debugger"
+printable_value = "modified in debugger\n"
 keep_running = False
-n
-n
+detach

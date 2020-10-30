@@ -1,16 +1,15 @@
 #/usr/bin/env bash
 
-touch out.txt
+rm -f test/out.txt
+touch test/out.txt
 
-python debuggable_process.py &
+python test/debuggable_process.py $1 &
 PID=$!
 
-python -m pdb_attach $PID < in.txt > out.txt
+python -m pdb_attach $PID $1 < test/in.txt
 
-diff out.txt expected.txt
+diff test/out.txt test/expected.txt
 
 if [ $? -ne 0 ]; then
-    return 1
+    exit 1
 fi
-
-return 0

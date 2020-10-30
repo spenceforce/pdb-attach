@@ -1,18 +1,24 @@
 # -*- mode: python -*-
 """pdb-attach is a python debugger that can attach to running processes."""
 import argparse
+import functools
+import logging
 import os
 import pdb
 import signal
 import socket
+import sys
 from types import FrameType
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Union
 
 
 __version__ = "0.0.1dev"
 
 
 _original_handler = signal.getsignal(signal.SIGUSR2)
+
+
+PDB_PROMPT = "(Pdb) "
 
 
 class PdbDetach(pdb.Pdb):
@@ -40,7 +46,7 @@ class PdbDetach(pdb.Pdb):
         self._set_stopinfo(None, None, -1)  # type: ignore
         return True
 
-    def precmd(self, line: str) -> str:
+    def precmd(self, line: str) -> str:  # pylint: disable=redefined-outer-name
         """Executed by the Cmd parent class before interpreting the command.
 
         Multiple handlers can act on the line, with each handler receiving the
@@ -61,28 +67,44 @@ class PdbDetach(pdb.Pdb):
         self._precmd_handlers.append(handler)
 
 
-def _handler(signum: int, frame: FrameType) -> None:  # pylint: disable=unused-argument
+def precmd_logger(line: str) -> str:  # pylint: disable=redefined-outer-name
+    """Logs incoming line to the debug logger."""
+    logging.debug(line)
+    return line
+
+
+def _handler(
+    port: int, signum: int, frame: FrameType  # pylint: disable=unused-argument
+) -> None:
     """Start the debugger.
 
     Meant to be called from a signal handler.
     """
     sock = socket.socket()
-    sock.bind(("localhost", 50007))
+    sock.bind(("localhost", port))
     sock.listen(1)
     serv, _ = sock.accept()
-    sf = serv.makefile("rwb", buffering=0)  # pylint: disable=invalid-name
-    PdbDetach(stdin=sf, stdout=sf).set_trace(frame)
+    sock_io = serv.makefile("rw", buffering=1)
+    debugger = PdbDetach(stdin=sock_io, stdout=sock_io)
+    debugger.set_trace(frame)
 
 
-def listen() -> None:
+def listen(port: Union[int, str]) -> None:
     """Initializes the handler to start a debugging session."""
-    signal.signal(signal.SIGUSR2, _handler)
+    if isinstance(port, str):
+        port = int(port)
+    handler = functools.partial(_handler, port)
+    signal.signal(signal.SIGUSR2, handler)
 
 
 def unlisten() -> None:
     """Stops listening."""
-    if signal.getsignal(signal.SIGUSR2) is _handler:
-        signal.signal(signal.SIGUSR2, _original_handler)
+    cur_sig = signal.getsignal(signal.SIGUSR2)
+    if cur_sig is not None:
+        if isinstance(cur_sig, int):
+            pass
+        elif hasattr(cur_sig, "func") and cur_sig.func is _handler:  # type: ignore
+            signal.signal(signal.SIGUSR2, _original_handler)
 
 
 if __name__ == "__main__":
@@ -90,14 +112,39 @@ if __name__ == "__main__":
     parser.add_argument(
         "pid", type=int, metavar="PID", help="The pid of the process to debug."
     )
+    parser.add_argument(
+        "port",
+        type=int,
+        metavar="PORT",
+        help="The port to connect to the running process.",
+    )
     cl_args = parser.parse_args()
 
     os.kill(cl_args.pid, signal.SIGUSR2)
-    client = socket.create_connection(("localhost", 50007))
-    cf = client.makefile("rwb", buffering=0)
+    client = socket.create_connection(("localhost", cl_args.port))
+    client_io = client.makefile("rw", buffering=1)
 
+    first_command = True  # pylint: disable=invalid-name
     while True:
-        line = cf.readline()
-        if line == "":
-            break
-        cf.write(input(line))
+        lines: List[str] = []
+        while True:
+            line = client_io.readline(len(PDB_PROMPT))
+            if line == PDB_PROMPT:
+                break
+
+            if line == "":
+                # The other side has closed the connection, so we can exit.
+                print("Connection closed.")
+                sys.exit(0)
+
+        if first_command is not True:
+            to_server = input("".join(lines))
+            if to_server[-1] != "\n":
+                to_server += "\n"
+
+            client_io.write(to_server)
+        else:
+            # For some reason the debugger starts in the __repr__ method of the
+            # socket, so counteract this by jumping up a frame.
+            client_io.write("u\n")
+            first_command = False  # pylint: disable=invalid-name

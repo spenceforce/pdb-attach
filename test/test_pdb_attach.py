@@ -4,12 +4,20 @@ import io
 import os
 import signal
 import socket
+import socketserver
 import subprocess
 import sys
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import pdb_attach  # pylint: disable=wrong-import-position
+
+
+@pytest.fixture
+def free_port():
+    with socketserver.TCPServer(("localhost", 0), None) as s:
+        free_port = s.server_address[1]
+    return free_port
 
 
 def test_detach():
@@ -43,10 +51,14 @@ def test_correct_detach_line():
 
 def test_signal_set():
     """Test the signal handler is set and unset by listen and unlisten."""
-    pdb_attach.listen()
-    assert signal.getsignal(signal.SIGUSR2) is pdb_attach._handler
+    pdb_attach.listen(0)
+    assert signal.getsignal(signal.SIGUSR2).func is pdb_attach._handler
     pdb_attach.unlisten()
-    assert signal.getsignal(signal.SIGUSR2) is not pdb_attach._handler
+    cur_sig = signal.getsignal(signal.SIGUSR2)
+    if hasattr(cur_sig, "func"):
+        assert cur_sig.func is not pdb_attach._handler
+    else:
+        assert cur_sig is not pdb_attach._handler
 
 
 def test_precmd_handler_runs():
@@ -69,9 +81,6 @@ def test_precmd_handler_runs():
     assert val[0] is True
 
 
-def test_end_to_end():
-    curdir = os.getcwd()
-    os.chdir("test")
-    proc = subprocess.run("./end_to_end.sh", shell=True)
+def test_end_to_end(free_port):
+    proc = subprocess.run("bash ./test/end_to_end.sh {}".format(free_port), shell=True)
     assert proc.returncode == 0
-    os.chdir(curdir)
