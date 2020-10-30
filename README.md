@@ -16,7 +16,7 @@ $ pip install pdb-attach
 
 ```python
 import pdb_attach
-pdb_attach.listen()
+pdb_attach.listen(50000)  # Listen on port 50000.
 
 def do_stuff():
     ...
@@ -28,7 +28,7 @@ if __name__ == '__main__:
 When the program is running, attach to it by calling `pdb_attach` from the command line with the PID of the program to inspect.
 
 ```bash
-$ python -m pdb_attach <PID>
+$ python -m pdb_attach <PID> 50000
 (Pdb)  # Interact with pdb as you normally would
 ```
 
@@ -36,7 +36,7 @@ When done, entering `detach` at the pdb prompt will detach pdb and the program w
 
 ```bash
 (Pdb) detach
-$  # Back at the command line.
+$  # Back at the command line and the original process is still running!
 ```
 
 <!-- `pdb_attach` uses a signal handler to start pdb on the running process and sockets to communicate with the user. By default, `pdb_attach` uses `SIGUSR2` for the signal handler and a random port for the sockets, but these can be changed by the user. -->
