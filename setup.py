@@ -31,6 +31,7 @@ setup(
     long_description=long_description,
     url="https://github.com/smitchell556/pdb-attach",
     author="Spencer Mitchell",
+    author_email="smitchell556@gmail.com",
     license="BSD 3-Clause",
     classifiers=[
         "Intended Audience :: Developers",

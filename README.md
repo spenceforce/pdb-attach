@@ -2,6 +2,10 @@
 
 A python debugger that can attach to running processes.
 
+> :exclamation: pdb-attach does not work on processes where it hasn't been imported and set up. If you just discovered this package and hope to use it on an already running process, you will need to restart the program with pdb-attach listening. Another option is to use `gdb` which can attach to a running python process, more information can be found [here](https://wiki.python.org/moin/DebuggingWithGdb). The catch with using `gdb` is that it doesn't step through the python source code, but instead steps through the C code running the python program. Your mileage may vary with `gdb`.
+
+> :exclamation: This code is in alpha phase. The basic functionality is tested, but corner cases haven't been. If this causes your program to exit prematurely I'm sorry. Fault tolerance is the next step on the road map.
+
 This package was made in response to frustration over debugging long running processes. Wouldn't it be nice to just attach pdb to a running python program and see what's going on? Well that's exactly what pdb-attach does.
 
 ## Installation ##
@@ -11,6 +15,12 @@ $ pip install pdb-attach
 ```
 
 ## Usage ##
+
+> :warning: pdb-attach uses sockets to communicate with the running process where `pdb` is actually being executed. While the window to connect to that process is very small, there is always the possibility that a bad actor that has access to your machine can connect to that port before you do. Since `pdb` is an interactive session with the process, this would give them the ability to inspect the source code of the running process, modify state of the running process, and **_run python code as you!_** That is bad and now you've been warned.
+>
+> Having said that, there are a few planned features that can mitigate this problem.
+> 1. Using a secret key known to the running process and the user so that only messages signed with that key will be executed.
+> 1. Modifying `pdb` such that it can only inspect the state of the program and execute the program as-is. Granted a bad actor could still read the source code and the state of the program, but they would not be able to change the state of the program or run arbitrary python code.
 
 `pdb_attach` must be imported and set up in the python program of interest in order for a user to attach to the running program.
 
@@ -25,7 +35,7 @@ if __name__ == '__main__:
     do_stuff()
 ```
 
-When the program is running, attach to it by calling `pdb_attach` from the command line with the PID of the program to inspect.
+When the program is running, attach to it by calling `pdb_attach` from the command line with the PID of the program to inspect and the port passed to `pdb_attach.listen()`.
 
 ```bash
 $ python -m pdb_attach <PID> 50000
@@ -38,5 +48,3 @@ When done, entering `detach` at the pdb prompt will detach pdb and the program w
 (Pdb) detach
 $  # Back at the command line and the original process is still running!
 ```
-
-<!-- `pdb_attach` uses a signal handler to start pdb on the running process and sockets to communicate with the user. By default, `pdb_attach` uses `SIGUSR2` for the signal handler and a random port for the sockets, but these can be changed by the user. -->
