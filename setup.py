@@ -29,6 +29,7 @@ setup(
     version=version,
     description="A python debugger that can attach to running processes.",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/smitchell556/pdb-attach",
     author="Spencer Mitchell",
     author_email="smitchell556@gmail.com",
