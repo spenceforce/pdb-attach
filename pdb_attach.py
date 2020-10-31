@@ -12,7 +12,7 @@ from types import FrameType
 from typing import Any, Callable, List, Union
 
 
-__version__ = "0.0.1dev"
+__version__ = "0.0.1"
 
 
 _original_handler = signal.getsignal(signal.SIGUSR2)
