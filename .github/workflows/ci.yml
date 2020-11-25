@@ -53,10 +53,10 @@ jobs:
     name: Tests
     needs: format
     if: ${{ always() }}
-    runs-on: [ ubuntu-latest, windows-latest ]
     strategy:
       matrix:
         python-version: ['3.5', '3.6', '3.7', '3.8', '3.9']
+        runs-on: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -80,7 +80,7 @@ jobs:
 
   release:
     name: Release
-    needs: test
+    needs: [format, test]
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
