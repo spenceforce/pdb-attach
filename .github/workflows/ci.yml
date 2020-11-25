@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - master
-      - [0-9]+.[0-9]+.x
-      - [0-9]+.x.x
+      - "[0-9]+.[0-9]+.x"
+      - "[0-9]+.x.x"
   pull_request:
     branches:
       - master
-      - [0-9]+.[0-9]+.x
-      - [0-9]+.x.x
+      - "[0-9]+.[0-9]+.x"
+      - "[0-9]+.x.x"
 
 jobs:
   format:
@@ -84,8 +84,8 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -94,18 +94,18 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pbr setuptools wheel twine
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12
-      - name: Install dependencies
-        run: npm ci
-      - name: Release
-        env:
-          CI: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SKIP_WRITE_GIT_CHANGELOG: 1
-          SKIP_GENERATE_RENO: 1
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: npx semantic-release
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+    - name: Install dependencies
+      run: npm ci
+    - name: Release
+      env:
+        CI: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SKIP_WRITE_GIT_CHANGELOG: 1
+        SKIP_GENERATE_RENO: 1
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: npx semantic-release
