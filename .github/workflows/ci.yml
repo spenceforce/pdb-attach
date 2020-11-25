@@ -1,0 +1,111 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+      - [0-9]+.[0-9]+.x
+      - [0-9]+.x.x
+  pull_request:
+    branches:
+      - master
+      - [0-9]+.[0-9]+.x
+      - [0-9]+.x.x
+
+jobs:
+  format:
+    name: Code formatting
+    if: ${{ github.event_name == 'push' }}
+    runs-on: [ ubuntu-latest ]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: FranzDiebold/github-env-vars-action@v1.2.1
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install black
+    - name: Format code with black
+      run: |
+        black --force-exclude test/debuggable_process.py pdb_attach.py test/*.py
+    - name: Commit formatted code
+      run: |
+        if [ -n "`git ls-files -m`" ]; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add --force --ignore-errors `git ls-files -m`
+            git commit -m "chore(format): format code with black [skip ci]"
+            echo "# Format with black" >> .git-blame-ignore-revs
+            echo "`git rev-parse HEAD`" >> .git-blame-ignore-revs
+            git add --force --ignore-errors .git-blame-ignore-revs
+            git commit -m "chore(git-blame): ignore formatting commit [skip ci]"
+        fi
+    - name: Push formatted code
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
+
+  test:
+    name: Tests
+    needs: format
+    if: ${{ always() }}
+    runs-on: [ ubuntu-latest, windows-latest ]
+    strategy:
+      matrix:
+        python-version: ['3.5', '3.6', '3.7', '3.8', '3.9']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install flake8 flake8-bandit flake8-bugbear flake8-builtins flake8-docstrings flake8-eradicate flake8-pytest-style flake8-simplify mccabe mypy pytest
+    - name: Type check with Mypy
+      run: |
+        mypy --no-incremental -p pdb_attach
+    - name: Lint with flake8
+      run: |
+        flake8 --exclude=test/debuggable_process.py --count --docstring-convention=numpy --max-complexity=10 --max-line-length=127 --statistics pdb_attach.py test/*.py
+    - name: Test with pytest
+      run: |
+        pytest
+
+  release:
+    name: Release
+    needs: test
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pbr setuptools wheel twine
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Install dependencies
+        run: npm ci
+      - name: Release
+        env:
+          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_WRITE_GIT_CHANGELOG: 1
+          SKIP_GENERATE_RENO: 1
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: npx semantic-release
