@@ -3,18 +3,18 @@
 import io
 import os
 import signal
-import socket
 import socketserver
 import subprocess
 import sys
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-import pdb_attach  # pylint: disable=wrong-import-position
+import pdb_attach
 
 
-@pytest.fixture
+@pytest.fixture()
 def free_port():
+    """Return port number of a free port."""
     with socketserver.TCPServer(("localhost", 0), None) as s:
         free_port = s.server_address[1]
     return free_port
@@ -38,9 +38,7 @@ def test_state_changes():
 
 
 def test_correct_detach_line():
-    """Test that the line after set_trace is not executed once by the debugger
-    and again after the debugger exits.
-    """
+    """Test line after set_trace is not executed after the debugger detaches."""
     val = False
     inp = io.StringIO("n\nval = True\ndetach\n")
     debugger = pdb_attach.PdbDetach(stdin=inp)
@@ -82,5 +80,7 @@ def test_precmd_handler_runs():
 
 
 def test_end_to_end(free_port):
-    proc = subprocess.run("bash ./test/end_to_end.sh {}".format(free_port), shell=True)
+    """End to end test(s)."""
+    test_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'end_to_end.sh'))
+    proc = subprocess.run(['bash', test_script, str(free_port)])
     assert proc.returncode == 0

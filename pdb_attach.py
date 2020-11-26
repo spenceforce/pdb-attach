@@ -47,7 +47,7 @@ class PdbDetach(pdb.Pdb):
         return True
 
     def precmd(self, line: str) -> str:  # pylint: disable=redefined-outer-name
-        """Executed by the Cmd parent class before interpreting the command.
+        """Execute precmd handlers before Cmd interprets the command.
 
         Multiple handlers can act on the line, with each handler receiving the
         line returned from the previous handler. In this way the line flows
@@ -68,7 +68,7 @@ class PdbDetach(pdb.Pdb):
 
 
 def precmd_logger(line: str) -> str:  # pylint: disable=redefined-outer-name
-    """Logs incoming line to the debug logger."""
+    """Log incoming line to the debug logger."""
     logging.debug(line)
     return line
 
@@ -90,7 +90,7 @@ def _handler(
 
 
 def listen(port: Union[int, str]) -> None:
-    """Initializes the handler to start a debugging session."""
+    """Initialize the handler to start a debugging session."""
     if isinstance(port, str):
         port = int(port)
     handler = functools.partial(_handler, port)
@@ -98,7 +98,7 @@ def listen(port: Union[int, str]) -> None:
 
 
 def unlisten() -> None:
-    """Stops listening."""
+    """Stop listening."""
     cur_sig = signal.getsignal(signal.SIGUSR2)
     if cur_sig is not None:
         if isinstance(cur_sig, int):
