@@ -50,7 +50,7 @@ jobs:
         branch: ${{ github.ref }}
 
   test:
-    name: Tests
+    name: Test
     needs: format
     if: ${{ always() }}
     runs-on: ${{ matrix.os }}
