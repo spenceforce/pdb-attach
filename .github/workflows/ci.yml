@@ -74,7 +74,6 @@ jobs:
   test:
     name: Test
     needs: lint
-    if: ${{ always() }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
