@@ -1,5 +1,7 @@
 # pdb-attach #
 
+![CI/CD](https://github.com/smitchell556/pdb-attach/workflows/CI/CD/badge.svg?branch=master)
+
 A python debugger that can attach to running processes.
 
 > :exclamation: pdb-attach does not work on processes where it hasn't been imported and set up. If you just discovered this package and hope to use it on an already running process, you will need to restart the program with pdb-attach listening. Another option is to use `gdb` which can attach to a running python process, more information can be found [here](https://wiki.python.org/moin/DebuggingWithGdb). The catch with using `gdb` is that it doesn't step through the python source code, but instead steps through the C code running the python program. Your mileage may vary with `gdb`.
