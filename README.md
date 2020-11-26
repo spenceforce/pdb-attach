@@ -1,6 +1,6 @@
 # pdb-attach #
 
-![CI/CD](https://github.com/smitchell556/pdb-attach/workflows/CI/CD/badge.svg?branch=master)
+![Test](https://github.com/smitchell556/pdb-attach/workflows/Test/badge.svg)
 
 A python debugger that can attach to running processes.
 
