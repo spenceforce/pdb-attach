@@ -1,5 +1,7 @@
 # -*- mode: python -*-
 """pdb-attach is a python debugger that can attach to running processes."""
+from __future__ import print_function
+
 import functools
 import logging
 import pdb
@@ -24,7 +26,7 @@ class PdbDetach(pdb.Pdb):
     use_rawinput = False
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        pdb.Pdb.__init__(self, *args, **kwargs)
         self._precmd_handlers = []
 
     def do_detach(self, arg):
@@ -53,7 +55,7 @@ class PdbDetach(pdb.Pdb):
 
         # After doing preprocessing, pass it off to the super class(es) for
         # whatever they want to do with it.
-        line = super().precmd(line)
+        line = pdb.Pdb.precmd(self, line)
 
         return line
 
@@ -79,7 +81,11 @@ def _handler(
     sock.bind(("localhost", port))
     sock.listen(1)
     serv, _ = sock.accept()
-    sock_io = serv.makefile("rw", buffering=1)
+    try:
+        sock_io = serv.makefile("rw", buffering=1)
+    except TypeError:
+        # Unexpected keyword argument. Try bufsize.
+        sock_io = serv.makefile("rw", bufsize=1)
     debugger = PdbDetach(stdin=sock_io, stdout=sock_io)
     debugger.set_trace(frame)
 

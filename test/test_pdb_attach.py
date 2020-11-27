@@ -1,12 +1,15 @@
 # -*- mode: python -*-
 """pdb-attach tests."""
+from __future__ import unicode_literals
+
 import io
 import os
 import signal
-import socketserver
+import socket
 import subprocess
 import sys
 import pytest
+from contextlib import closing
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import pdb_attach
@@ -15,9 +18,10 @@ import pdb_attach
 @pytest.fixture()
 def free_port():
     """Return port number of a free port."""
-    with socketserver.TCPServer(("localhost", 0), None) as s:
-        free_port = s.server_address[1]
-    return free_port
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('localhost', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
 
 def test_detach():
@@ -83,5 +87,5 @@ def test_precmd_handler_runs():
 def test_end_to_end(free_port):
     """End to end test(s)."""
     test_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'end_to_end.sh'))
-    proc = subprocess.run(['bash', test_script, str(free_port)])
-    assert proc.returncode == 0
+    returncode = subprocess.call(['bash', test_script, str(free_port)])
+    assert returncode == 0

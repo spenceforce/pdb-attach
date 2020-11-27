@@ -22,13 +22,18 @@ if __name__ == "__main__":
 
     os.kill(args.pid, signal.SIGUSR2)
     client = socket.create_connection(("localhost", args.port))
-    client_io = client.makefile("rw", buffering=1)
+    try:
+        client_io = client.makefile("rw", buffering=1)
+    except TypeError:
+        # Unexpected keyword argument. Try bufsize.
+        client_io = client.makefile("rw", bufsize=1)
 
     first_command = True
     while True:
         lines = []
         while True:
             line = client_io.readline(len(PDB_PROMPT))
+            lines.append(line)
             if line == PDB_PROMPT:
                 break
 
@@ -38,7 +43,12 @@ if __name__ == "__main__":
                 sys.exit(0)
 
         if first_command is not True:
-            to_server = input("".join(lines))
+            prompt = "".join(lines)
+            try:
+                to_server = raw_input(lines)
+            except NameError:
+                to_server = input("".join(lines))
+
             if to_server[-1] != "\n":
                 to_server += "\n"
 

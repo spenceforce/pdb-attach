@@ -29,7 +29,7 @@ jobs:
         python -m pip install flake8 flake8-bandit flake8-bugbear flake8-builtins flake8-docstrings flake8-eradicate flake8-pytest-style flake8-simplify mccabe pytest
     - name: Lint with flake8
       run: |
-        flake8 --exclude=test/debuggable_process.py --count --docstring-convention=numpy --max-complexity=10 --max-line-length=127 --statistics pdb_attach.py test/*.py
+        flake8 --exclude=test/debuggable_process.py --count --docstring-convention=numpy --max-complexity=10 --max-line-length=127 --statistics pdb_attach/*.py test/*.py
 
   test:
     # And type check. It's easier to do here as opposed to making a new matrix.
