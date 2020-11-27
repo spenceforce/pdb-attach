@@ -28,11 +28,11 @@ class PdbDetach(pdb.Pdb):
     # stdin and stdout.
     use_rawinput = False
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._precmd_handlers: List[Callable[[str], str]] = []
+        self._precmd_handlers = []
 
-    def do_detach(self, arg: str) -> bool:  # pylint: disable=unused-argument
+    def do_detach(self, arg):
         """Detach the debugger and continue running."""
         # A couple notes:
         # self.trace_dispatch is being set to None because bdb.py passes this
@@ -46,7 +46,7 @@ class PdbDetach(pdb.Pdb):
         self._set_stopinfo(None, None, -1)  # type: ignore
         return True
 
-    def precmd(self, line: str) -> str:  # pylint: disable=redefined-outer-name
+    def precmd(self, line):
         """Execute precmd handlers before Cmd interprets the command.
 
         Multiple handlers can act on the line, with each handler receiving the
@@ -62,20 +62,20 @@ class PdbDetach(pdb.Pdb):
 
         return line
 
-    def attach_precmd_handler(self, handler: Callable[[str], str]) -> None:
+    def attach_precmd_handler(self, handler):
         """Attach a handler to be run in the precmd hook."""
         self._precmd_handlers.append(handler)
 
 
-def precmd_logger(line: str) -> str:  # pylint: disable=redefined-outer-name
+def precmd_logger(line):
     """Log incoming line to the debug logger."""
     logging.debug(line)
     return line
 
 
 def _handler(
-    port: int, signum: int, frame: FrameType  # pylint: disable=unused-argument
-) -> None:
+    port, signum, frame
+):
     """Start the debugger.
 
     Meant to be called from a signal handler.
@@ -89,7 +89,7 @@ def _handler(
     debugger.set_trace(frame)
 
 
-def listen(port: Union[int, str]) -> None:
+def listen(port):
     """Initialize the handler to start a debugging session."""
     if isinstance(port, str):
         port = int(port)
@@ -97,7 +97,7 @@ def listen(port: Union[int, str]) -> None:
     signal.signal(signal.SIGUSR2, handler)
 
 
-def unlisten() -> None:
+def unlisten():
     """Stop listening."""
     cur_sig = signal.getsignal(signal.SIGUSR2)
     if cur_sig is not None:
@@ -118,13 +118,13 @@ if __name__ == "__main__":
         metavar="PORT",
         help="The port to connect to the running process.",
     )
-    cl_args = parser.parse_args()
+    args = parser.parse_args()
 
-    os.kill(cl_args.pid, signal.SIGUSR2)
-    client = socket.create_connection(("localhost", cl_args.port))
+    os.kill(args.pid, signal.SIGUSR2)
+    client = socket.create_connection(("localhost", args.port))
     client_io = client.makefile("rw", buffering=1)
 
-    first_command = True  # pylint: disable=invalid-name
+    first_command = True
     while True:
         lines: List[str] = []
         while True:
@@ -147,4 +147,4 @@ if __name__ == "__main__":
             # For some reason the debugger starts in the __repr__ method of the
             # socket, so counteract this by jumping up a frame.
             client_io.write("u\n")
-            first_command = False  # pylint: disable=invalid-name
+            first_command = False
