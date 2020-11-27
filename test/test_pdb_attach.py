@@ -49,14 +49,15 @@ def test_correct_detach_line():
 
 def test_signal_set():
     """Test the signal handler is set and unset by listen and unlisten."""
+    from pdb_attach.pdb_attach import _handler
     pdb_attach.listen(0)
-    assert signal.getsignal(signal.SIGUSR2).func is pdb_attach._handler
+    assert signal.getsignal(signal.SIGUSR2).func is _handler
     pdb_attach.unlisten()
     cur_sig = signal.getsignal(signal.SIGUSR2)
     if hasattr(cur_sig, "func"):
-        assert cur_sig.func is not pdb_attach._handler
+        assert cur_sig.func is not _handler
     else:
-        assert cur_sig is not pdb_attach._handler
+        assert cur_sig is not _handler
 
 
 def test_precmd_handler_runs():
