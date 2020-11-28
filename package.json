@@ -18,17 +18,44 @@
     "semantic-release": "^17.3.0"
   },
   "release": {
+    "branches": [
+      "+([0-9])?(.{+([0-9]),x}).x",
+      "master",
+      "main",
+      "next",
+      "next-major",
+      {
+        "name": "beta",
+        "prerelease": true
+      },
+      {
+        "name": "alpha",
+        "prerelease": true
+      }
+    ],
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      ["@semantic-release/exec", {
-        "prepareCmd": "export PBR_VERSION=${nextRelease.version} && python setup.py sdist bdist_wheel",
-        "publishCmd": "twine upload dist/*"
-      }],
-      ["@semantic-release/git", {
-        "assets": ["CHANGELOG.md", "package.json", "package-lock.json", "MANIFEST.in", "AUTHOR"],
-        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-      }]
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "export PBR_VERSION=${nextRelease.version} && python setup.py sdist bdist_wheel",
+          "publishCmd": "twine upload dist/*"
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "CHANGELOG.md",
+            "package.json",
+            "package-lock.json",
+            "MANIFEST.in",
+            "AUTHOR"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
     ]
   }
 }
