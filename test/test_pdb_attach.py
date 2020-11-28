@@ -55,9 +55,9 @@ def test_correct_detach_line():
 def test_signal_set():
     """Test the signal handler is set and unset by listen and unlisten."""
     pdb_attach.listen(0)
-    assert signal.getsignal(signal.SIGUSR2).func is pdb_detach._handler
+    assert signal.getsignal(pdb_detach._signal).func is pdb_detach._handler
     pdb_attach.unlisten()
-    cur_sig = signal.getsignal(signal.SIGUSR2)
+    cur_sig = signal.getsignal(pdb_detach._signal)
     if hasattr(cur_sig, "func"):
         assert cur_sig.func is not pdb_detach._handler
     else:

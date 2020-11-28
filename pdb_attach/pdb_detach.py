@@ -4,12 +4,15 @@ from __future__ import print_function
 
 import functools
 import logging
+import os
 import pdb
 import signal
 import socket
 
+# Windows does not have SIGUSR[12], so use SIGBREAK instead.
+_signal = signal.SIGUSR2 if os.name == 'posix' else signal.SIGBREAK
 
-_original_handler = signal.getsignal(signal.SIGUSR2)
+_original_handler = signal.getsignal(_signal)
 
 
 class PdbDetach(pdb.Pdb):
@@ -89,11 +92,11 @@ def listen(port):
     if isinstance(port, str):
         port = int(port)
     handler = functools.partial(_handler, port)
-    signal.signal(signal.SIGUSR2, handler)
+    signal.signal(_signal, handler)
 
 
 def unlisten():
     """Stop listening."""
-    cur_sig = signal.getsignal(signal.SIGUSR2)
+    cur_sig = signal.getsignal(_signal)
     if hasattr(cur_sig, "func") and cur_sig.func is _handler:
-        signal.signal(signal.SIGUSR2, _original_handler)
+        signal.signal(_signal, _original_handler)

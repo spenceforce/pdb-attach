@@ -2,9 +2,10 @@
 """Pdb-attach client that can be run as a module."""
 import argparse
 import os
-import signal
 import socket
 import sys
+
+from .pdb_detach import _signal
 
 PDB_PROMPT = "(Pdb) "
 
@@ -20,7 +21,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-os.kill(args.pid, signal.SIGUSR2)
+os.kill(args.pid, _signal)
 client = socket.create_connection(("localhost", args.port))
 try:
     client_io = client.makefile("rw", buffering=1)
