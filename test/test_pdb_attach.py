@@ -87,5 +87,6 @@ def test_precmd_handler_runs():
 def test_end_to_end(free_port):
     """End to end test(s)."""
     test_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'end_to_end.sh'))
-    returncode = subprocess.call(['bash', test_script, str(free_port)])
+    # GitHub Actions for Windows runners fails to find bash on PATH without `shell=True`.
+    returncode = subprocess.call('bash {} {}'.format(test_script, free_port), shell=True)
     assert returncode == 0
