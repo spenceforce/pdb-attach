@@ -26,7 +26,7 @@ try:
     client_io = client.makefile("rw", buffering=1)
 except TypeError:
     # Unexpected keyword argument. Try bufsize.
-    client_io = client.makefile("rw", bufsize=1)
+    client_io = client.makefile("rw", bufsize=1)  # type: ignore  # Python 2.7 compatibility.
 
 first_command = True
 while True:
@@ -45,7 +45,7 @@ while True:
     if first_command is not True:
         prompt = "".join(lines)
         try:
-            to_server = raw_input(lines)
+            to_server = raw_input(lines)  # type: ignore  # Python 2.7 compatibility.
         except NameError:
             # Ignore flake8 warning about input in Python 2.7 since we are checking for raw_input first.
             to_server = input("".join(lines))  # noqa: S322

@@ -13,6 +13,7 @@ from contextlib import closing
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import pdb_attach
+import pdb_attach.pdb_detach as pdb_detach
 
 
 @pytest.fixture()
@@ -27,7 +28,7 @@ def free_port():
 def test_detach():
     """Test the debugger goes to the next line then detaches."""
     inp = io.StringIO("detach\n")
-    debugger = pdb_attach.PdbDetach(stdin=inp)
+    debugger = pdb_detach.PdbDetach(stdin=inp)
     debugger.set_trace()
     assert True  # If pdb quits this will never be reached.
 
@@ -36,7 +37,7 @@ def test_state_changes():
     """Test the state changes that happen in the debugger persist."""
     val = False
     inp = io.StringIO("val = True\ndetach\n")
-    debugger = pdb_attach.PdbDetach(stdin=inp)
+    debugger = pdb_detach.PdbDetach(stdin=inp)
     debugger.set_trace()
     assert val is True
 
@@ -45,7 +46,7 @@ def test_correct_detach_line():
     """Test line after set_trace is not executed after the debugger detaches."""
     val = False
     inp = io.StringIO("n\nval = True\ndetach\n")
-    debugger = pdb_attach.PdbDetach(stdin=inp)
+    debugger = pdb_detach.PdbDetach(stdin=inp)
     debugger.set_trace()
     val = False
     assert val is True
@@ -53,15 +54,14 @@ def test_correct_detach_line():
 
 def test_signal_set():
     """Test the signal handler is set and unset by listen and unlisten."""
-    from pdb_attach.pdb_attach import _handler
     pdb_attach.listen(0)
-    assert signal.getsignal(signal.SIGUSR2).func is _handler
+    assert signal.getsignal(signal.SIGUSR2).func is pdb_detach._handler
     pdb_attach.unlisten()
     cur_sig = signal.getsignal(signal.SIGUSR2)
     if hasattr(cur_sig, "func"):
-        assert cur_sig.func is not _handler
+        assert cur_sig.func is not pdb_detach._handler
     else:
-        assert cur_sig is not _handler
+        assert cur_sig is not pdb_detach._handler
 
 
 def test_precmd_handler_runs():
@@ -78,7 +78,7 @@ def test_precmd_handler_runs():
         return line
 
     inp = io.StringIO("detach\n")
-    debugger = pdb_attach.PdbDetach(stdin=inp)
+    debugger = pdb_detach.PdbDetach(stdin=inp)
     debugger.attach_precmd_handler(precmd)
     debugger.set_trace()
     assert val[0] is True

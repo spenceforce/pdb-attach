@@ -49,10 +49,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install mypy pytest
+        python -m pip install pytest
     - name: Type check with Mypy
       if: ${{ matrix.python != '2.7' }}
       run: |
+        python -m pip install mypy
         mypy --no-incremental -p pdb_attach
     - name: Test with pytest
       run: |
