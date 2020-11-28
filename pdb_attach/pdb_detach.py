@@ -10,7 +10,7 @@ import signal
 import socket
 
 # Windows does not have SIGUSR[12], so use SIGBREAK instead.
-_signal = signal.SIGUSR2 if os.name == 'posix' else signal.SIGBREAK
+_signal = signal.SIGUSR2 if os.name == 'posix' else signal.SIGINT
 
 _original_handler = signal.getsignal(_signal)
 
