@@ -1,8 +1,9 @@
 import pdb
+import signal
 from types import FrameType
 from typing import Any, Callable, List, Union
 
-__version__: str
+_signal: signal.Signals
 _original_handler: Any
 PDB_PROMPT: str
 
