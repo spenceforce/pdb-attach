@@ -1,0 +1,3 @@
+include README.* CHANGELOG.*
+graft test
+global-exclude *.py[cod]
