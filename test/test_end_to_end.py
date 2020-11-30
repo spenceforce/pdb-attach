@@ -9,8 +9,6 @@ try:
 except ImportError:
     from test.support import find_unused_port
 
-import pytest
-
 from context import pdb_attach
 
 
@@ -25,7 +23,6 @@ def infinite_loop(port):
     pdb_attach.unlisten()
 
 
-@pytest.mark.timeout(10)
 def test_end_to_end():
     """Test client commands are honored.
 
