@@ -37,23 +37,21 @@
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       [
-        "@semantic-release/exec",
-        {
-          "prepareCmd": "export PBR_VERSION=${nextRelease.version} && python setup.py sdist bdist_wheel",
-          "publishCmd": "twine upload dist/*"
-        }
-      ],
-      [
         "@semantic-release/git",
         {
           "assets": [
             "CHANGELOG.md",
             "package.json",
             "package-lock.json",
-            "MANIFEST.in",
-            "AUTHOR"
           ],
           "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ],
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "export SKIP_GENERATE_RENO=1 && export SKIP_WRITE_GIT_CHANGELOG=1 && export SKIP_GIT_SDIST=1 && export PBR_VERSION=${nextRelease.version} && python setup.py sdist bdist_wheel",
+          "publishCmd": "twine upload dist/*"
         }
       ]
     ]
