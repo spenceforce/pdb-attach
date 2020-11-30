@@ -3,8 +3,11 @@
 from __future__ import unicode_literals
 
 import subprocess
-import test.support as support
 from multiprocessing import Process
+try:
+    from test.support.socket_helper import find_unused_port
+except ImportError:
+    from test.support import find_unused_port
 
 import pytest
 
@@ -29,7 +32,7 @@ def test_end_to_end():
     It should change the running value to False and detach.
     """
     # Get an unused port.
-    port = support.find_unused_port()
+    port = find_unused_port()
 
     # Run an infinite loop with that port.
     p_serv = Process(target=infinite_loop, args=(port,))
