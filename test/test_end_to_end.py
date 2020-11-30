@@ -52,6 +52,3 @@ def test_end_to_end():
     # Ensure the prompt is output to the client.
     assert len(out) > 0
     assert b"(Pdb)" in out
-
-    # Clean up for good measure.
-    p_client.kill()
