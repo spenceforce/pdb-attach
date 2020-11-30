@@ -2,20 +2,17 @@
 """pdb-attach end to end tests."""
 from __future__ import unicode_literals
 
-import io
-import os
-import socket
 import subprocess
 import test.support as support
 from multiprocessing import Process
 
 import pytest
 
-from context import pdb_attach, pdb_detach
+from context import pdb_attach
 
 
 def infinite_loop(port):
-    """A function that runs an infinite loop."""
+    """Run an infinite loop."""
     pdb_attach.listen(port)
     keep_running = True
 
@@ -39,7 +36,7 @@ def test_end_to_end():
     p_serv.start()
 
     # Run pdb_attach as a module with the stdin pointing to the input file.
-    p_client = subprocess.Popen(['python', '-m', 'pdb_attach', str(p_serv.pid), str(port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)# input_file.open())
+    p_client = subprocess.Popen(['python', '-m', 'pdb_attach', str(p_serv.pid), str(port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p_client.communicate(b'n\nkeep_running = False\ndetach\n')
     if len(err) > 0:
         print(err)

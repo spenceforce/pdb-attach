@@ -5,10 +5,6 @@ from __future__ import unicode_literals
 import io
 import os
 import signal
-import socket
-import subprocess
-
-import pytest
 
 from context import pdb_attach, pdb_detach
 
