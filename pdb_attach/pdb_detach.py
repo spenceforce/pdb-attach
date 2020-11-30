@@ -64,9 +64,7 @@ def precmd_logger(line):
     return line
 
 
-def _handler(
-    port, signum, frame
-):
+def _handler(port, signum, frame):
     """Start the debugger.
 
     Meant to be called from a signal handler.

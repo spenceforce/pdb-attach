@@ -36,8 +36,13 @@ def test_end_to_end():
     p_serv.start()
 
     # Run pdb_attach as a module with the stdin pointing to the input file.
-    p_client = subprocess.Popen(['python', '-m', 'pdb_attach', str(p_serv.pid), str(port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p_client.communicate(b'n\nkeep_running = False\ndetach\n')
+    p_client = subprocess.Popen(
+        ["python", "-m", "pdb_attach", str(p_serv.pid), str(port)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    out, err = p_client.communicate(b"n\nkeep_running = False\ndetach\n")
     if len(err) > 0:
         print(err)
 
@@ -46,7 +51,7 @@ def test_end_to_end():
 
     # Ensure the prompt is output to the client.
     assert len(out) > 0
-    assert b'(Pdb)' in out
+    assert b"(Pdb)" in out
 
     # Clean up for good measure.
     p_client.kill()
