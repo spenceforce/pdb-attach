@@ -2,7 +2,6 @@
 """Detachable debugger."""
 from __future__ import print_function
 
-import functools
 import logging
 import pdb
 import signal
@@ -64,34 +63,40 @@ def precmd_logger(line):
     return line
 
 
-def _handler(port, signum, frame):
-    """Start the debugger.
+class _Handler(object):
+    """Signal handler that starts the debugger."""
 
-    Meant to be called from a signal handler.
-    """
-    sock = socket.socket()
-    sock.bind(("localhost", port))
-    sock.listen(1)
-    serv, _ = sock.accept()
-    try:
-        sock_io = serv.makefile("rw", buffering=1)
-    except TypeError:
-        # Unexpected keyword argument. Try bufsize.
-        sock_io = serv.makefile("rw", bufsize=1)
-    debugger = PdbDetach(stdin=sock_io, stdout=sock_io)
-    debugger.set_trace(frame)
+    def __init__(self, port):
+        self.sock = socket.socket()
+        self.sock.bind(("localhost", port))
+        self.sock.listen(1)
+
+    def __call__(self, signum, frame):
+        serv, _ = self.sock.accept()
+        try:
+            sock_io = serv.makefile("rw", buffering=1)
+        except TypeError:
+            # Unexpected keyword argument. Try bufsize.
+            sock_io = serv.makefile("rw", bufsize=1)
+        debugger = PdbDetach(stdin=sock_io, stdout=sock_io)
+        debugger.set_trace(frame)
+
+    def close(self):
+        self.sock.close()
 
 
 def listen(port):
     """Initialize the handler to start a debugging session."""
     if isinstance(port, str):
         port = int(port)
-    handler = functools.partial(_handler, port)
+
+    handler = _Handler(port)
     signal.signal(signal.SIGUSR2, handler)
 
 
 def unlisten():
     """Stop listening."""
     cur_sig = signal.getsignal(signal.SIGUSR2)
-    if hasattr(cur_sig, "func") and cur_sig.func is _handler:
+    if isinstance(cur_sig, _Handler):
+        cur_sig.close()
         signal.signal(signal.SIGUSR2, _original_handler)

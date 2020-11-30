@@ -3,7 +3,8 @@
 from __future__ import unicode_literals
 
 import subprocess
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+
 try:
     from test.support.socket_helper import find_unused_port
 except ImportError:
@@ -12,10 +13,13 @@ except ImportError:
 from context import pdb_attach
 
 
-def infinite_loop(port):
+def infinite_loop(port, channel):
     """Run an infinite loop."""
     pdb_attach.listen(port)
     keep_running = True
+
+    # Signal this process is listening
+    channel.put(1)
 
     while keep_running:
         pass
@@ -28,12 +32,16 @@ def test_end_to_end():
 
     It should change the running value to False and detach.
     """
+    channel = Queue()
     # Get an unused port.
     port = find_unused_port()
 
     # Run an infinite loop with that port.
-    p_serv = Process(target=infinite_loop, args=(port,))
+    p_serv = Process(target=infinite_loop, args=(port, channel))
     p_serv.start()
+
+    # Wait for the server to signal it's ready to connect.
+    channel.get()
 
     # Run pdb_attach as a module with the stdin pointing to the input file.
     p_client = subprocess.Popen(
@@ -42,7 +50,7 @@ def test_end_to_end():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    out, err = p_client.communicate(b"n\nkeep_running = False\ndetach\n")
+    out, err = p_client.communicate(b"keep_running = False\ndetach\n")
     if len(err) > 0:
         print(err)
 
