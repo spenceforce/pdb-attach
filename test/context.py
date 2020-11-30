@@ -1,6 +1,7 @@
 """Pdb-attach context.
 
-For tests, import ``pdb_attach`` and other related modules from this module instead of directly. This ensures ``pdb_attach`` is on the path.
+For tests, import ``pdb_attach`` and other related modules from this module instead of
+directly. This ensures ``pdb_attach`` is on the path.
 """
 import os
 import sys
