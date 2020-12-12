@@ -13,8 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pa
 
 def test_listen_raises_warning():
     """Test warnings are raised."""
-    with pytest.warns(UserWarning):
-        import pdb_attach
+    import pdb_attach
 
     with pytest.warns(UserWarning):
         pdb_attach.listen(50000)
