@@ -6,6 +6,7 @@ import pytest
 
 warnings.simplefilter("always")
 
+
 def test_import_raises_warning():
     """Test importing pdb_attach raises a warning."""
     with pytest.warns(UserWarning):
