@@ -7,6 +7,7 @@ import os
 import signal
 
 from context import pdb_attach, pdb_detach
+from skip import skip_windows
 
 
 def test_detach():
@@ -36,12 +37,22 @@ def test_correct_detach_line():
     assert val is True
 
 
+@skip_windows
 def test_signal_set():
     """Test the signal handler is set and unset by listen and unlisten."""
     pdb_attach.listen(0)
     assert isinstance(signal.getsignal(signal.SIGUSR2), pdb_detach._Handler)
     pdb_attach.unlisten()
     assert not isinstance(signal.getsignal(signal.SIGUSR2), pdb_detach._Handler)
+
+
+@skip_windows
+def test_original_signal_restored():
+    """Test the original signal is restored by unlisten."""
+    pdb_attach.listen(0)
+    cur_sig = signal.getsignal(signal.SIGUSR2)
+    pdb_attach.unlisten()
+    assert cur_sig.original_handler is signal.getsignal(signal.SIGUSR2)
 
 
 def test_precmd_handler_runs():

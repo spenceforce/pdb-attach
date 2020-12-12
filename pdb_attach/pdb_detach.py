@@ -3,12 +3,31 @@
 from __future__ import print_function
 
 import logging
+import functools
 import pdb
+import platform
 import signal
 import socket
+import warnings
 
 
-_original_handler = signal.getsignal(signal.SIGUSR2)
+def _skip_windows(f):
+    def _pass(*args, **kwargs):
+        warnings.warn(
+            "{} was called on a Windows platform, so it does nothing.".format(
+                f.__name__
+            ),
+            UserWarning,
+        )
+
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if platform.system() == "Windows":
+            _pass(*args, **kwargs)
+        else:
+            f(*args, **kwargs)
+
+    return wrapper
 
 
 class PdbDetach(pdb.Pdb):
@@ -66,7 +85,9 @@ def precmd_logger(line):
 class _Handler(object):
     """Signal handler that starts the debugger."""
 
-    def __init__(self, port):
+    def __init__(self, port, original_handler):
+        self.original_handler = original_handler
+
         self.sock = socket.socket()
         self.sock.bind(("localhost", port))
         self.sock.listen(1)
@@ -85,18 +106,20 @@ class _Handler(object):
         self.sock.close()
 
 
+@_skip_windows
 def listen(port):
     """Initialize the handler to start a debugging session."""
     if isinstance(port, str):
         port = int(port)
 
-    handler = _Handler(port)
+    handler = _Handler(port, signal.getsignal(signal.SIGUSR2))
     signal.signal(signal.SIGUSR2, handler)
 
 
+@_skip_windows
 def unlisten():
     """Stop listening."""
     cur_sig = signal.getsignal(signal.SIGUSR2)
     if isinstance(cur_sig, _Handler):
         cur_sig.close()
-        signal.signal(signal.SIGUSR2, _original_handler)
+        signal.signal(signal.SIGUSR2, cur_sig.original_handler)

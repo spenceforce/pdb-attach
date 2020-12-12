@@ -16,6 +16,31 @@ This package was made in response to frustration over debugging long running pro
 $ pip install pdb-attach
 ```
 
+## Requirements ##
+
+### OS ###
+
+Supports OSes that implement POSIX only.
+
+Unfortunately pdb-attach doesn't work on Windows. It's an artifact of the implementation using signals to prompt the remote debugger to accept a socket connection. I would like to support Windows in the future, but because of how Windows handles signals, it will require a different implementation that doesn't rely on signals.
+
+> :warning: On Windows, pdb-attach is still importable, but `listen` won't do anything. Instead a warning will be raised on import and when `listen` is called.
+
+### Python versions ###
+
+Currently supports:
+
+- 2.7
+- 3.3
+- 3.4
+- 3.5
+- 3.6
+- 3.7
+- 3.8
+- 3.9
+
+The policy on python version support is to support all active versions of python. For any version that has reached end of life, that version will continue to be supported for the last major release of pdb-attach it was a part of. New major releases of pdb-attach after a python version has been end of lifed may drop support for that version of python.
+
 ## Usage ##
 
 > :warning: pdb-attach uses sockets to communicate with the running process where `pdb` is actually being executed. While the window to connect to that process is very small, there is always the possibility that a bad actor that has access to your machine can connect to that port before you do. Since `pdb` is an interactive session with the process, this would give them the ability to inspect the source code of the running process, modify state of the running process, and **_run python code as you!_** That is bad and now you've been warned.

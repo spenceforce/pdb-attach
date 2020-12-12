@@ -11,6 +11,7 @@ except ImportError:
     from test.support import find_unused_port
 
 from context import pdb_attach
+from skip import skip_windows
 
 
 def infinite_loop(port, channel):
@@ -27,6 +28,7 @@ def infinite_loop(port, channel):
     pdb_attach.unlisten()
 
 
+@skip_windows
 def test_end_to_end():
     """Test client commands are honored.
 
