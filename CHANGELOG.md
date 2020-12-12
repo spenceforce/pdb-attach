@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.5](///compare/v1.0.4...v1.0.5) (2020-12-12)
+
+
+### Bug Fixes
+
+* raise a warning on Windows 15f1902, closes #4
+
 ### [1.0.4](///compare/v1.0.3...v1.0.4) (2020-11-30)
 
 
