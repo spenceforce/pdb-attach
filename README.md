@@ -24,6 +24,8 @@ Supports OSes that implement POSIX only.
 
 Unfortunately pdb-attach doesn't work on Windows. It's an artifact of the implementation using signals to prompt the remote debugger to accept a socket connection. I would like to support Windows in the future, but because of how Windows handles signals, it will require a different implementation that doesn't rely on signals.
 
+> :warning: On Windows, pdb-attach is still importable, but `listen` won't do anything. Instead a warning will be raised on import and when `listen` is called.
+
 ### Python versions ###
 
 Currently supports:
