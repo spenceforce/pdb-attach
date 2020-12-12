@@ -46,6 +46,15 @@ def test_signal_set():
     assert not isinstance(signal.getsignal(signal.SIGUSR2), pdb_detach._Handler)
 
 
+@skip_windows
+def test_original_signal_restored():
+    """Test the original signal is restored by unlisten."""
+    pdb_attach.listen(0)
+    cur_sig = signal.getsignal(signal.SIGUSR2)
+    pdb_attach.unlisten()
+    assert cur_sig.original_handler is signal.getsignal(signal.SIGUSR2)
+
+
 def test_precmd_handler_runs():
     """Test attached precmd handler is executed.
 

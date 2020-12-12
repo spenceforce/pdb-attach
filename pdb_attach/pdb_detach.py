@@ -11,9 +11,6 @@ import socket
 import warnings
 
 
-_original_handler = signal.getsignal(signal.SIGUSR2)
-
-
 def _skip_windows(f):
     def _pass(*args, **kwargs):
         warnings.warn(
@@ -88,7 +85,9 @@ def precmd_logger(line):
 class _Handler(object):
     """Signal handler that starts the debugger."""
 
-    def __init__(self, port):
+    def __init__(self, port, original_handler):
+        self.original_handler = original_handler
+
         self.sock = socket.socket()
         self.sock.bind(("localhost", port))
         self.sock.listen(1)
@@ -113,7 +112,7 @@ def listen(port):
     if isinstance(port, str):
         port = int(port)
 
-    handler = _Handler(port)
+    handler = _Handler(port, signal.getsignal(signal.SIGUSR2))
     signal.signal(signal.SIGUSR2, handler)
 
 
@@ -123,4 +122,4 @@ def unlisten():
     cur_sig = signal.getsignal(signal.SIGUSR2)
     if isinstance(cur_sig, _Handler):
         cur_sig.close()
-        signal.signal(signal.SIGUSR2, _original_handler)
+        signal.signal(signal.SIGUSR2, cur_sig.original_handler)
