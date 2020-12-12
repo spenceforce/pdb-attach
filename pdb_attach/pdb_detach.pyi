@@ -1,8 +1,12 @@
 import pdb
 from types import FrameType
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, TypeVar, Union
 
 _original_handler: Any
+
+F = TypeVar('F', bound=Callable[..., Any])
+
+def _skip_windows(f: F) -> F: ...
 
 class PdbDetach(pdb.Pdb):
     use_rawinput: bool = ...

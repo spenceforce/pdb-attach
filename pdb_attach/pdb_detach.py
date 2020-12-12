@@ -3,12 +3,34 @@
 from __future__ import print_function
 
 import logging
+import functools
 import pdb
+import platform
 import signal
 import socket
+import warnings
 
 
 _original_handler = signal.getsignal(signal.SIGUSR2)
+
+
+def _skip_windows(f):
+    def _pass(*args, **kwargs):
+        warnings.warn(
+            "{} was called on a Windows platform, so it does nothing.".format(
+                f.__name__
+            ),
+            UserWarning,
+        )
+
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if platform.system() == "Windows":
+            _pass(*args, **kwargs)
+        else:
+            f(*args, **kwargs)
+
+    return wrapper
 
 
 class PdbDetach(pdb.Pdb):
@@ -85,6 +107,7 @@ class _Handler(object):
         self.sock.close()
 
 
+@_skip_windows
 def listen(port):
     """Initialize the handler to start a debugging session."""
     if isinstance(port, str):
@@ -94,6 +117,7 @@ def listen(port):
     signal.signal(signal.SIGUSR2, handler)
 
 
+@_skip_windows
 def unlisten():
     """Stop listening."""
     cur_sig = signal.getsignal(signal.SIGUSR2)

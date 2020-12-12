@@ -7,6 +7,7 @@ import os
 import signal
 
 from context import pdb_attach, pdb_detach
+from skip import skip_windows
 
 
 def test_detach():
@@ -36,6 +37,7 @@ def test_correct_detach_line():
     assert val is True
 
 
+@skip_windows
 def test_signal_set():
     """Test the signal handler is set and unset by listen and unlisten."""
     pdb_attach.listen(0)

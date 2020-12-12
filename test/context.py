@@ -4,9 +4,11 @@ For tests, import ``pdb_attach`` and other related modules from this module inst
 directly. This ensures ``pdb_attach`` is on the path.
 """
 import os
+import platform
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+import pytest
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import pdb_attach
 import pdb_attach.pdb_detach as pdb_detach
