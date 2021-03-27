@@ -48,6 +48,9 @@ while True:
         # Ignore flake8 warning about input in Python 2.7 since we are checking for raw_input first.
         to_server = input("".join(lines))  # noqa: S322
 
+    if not to_server:
+        continue
+    
     if to_server[-1] != "\n":
         to_server += "\n"
 
