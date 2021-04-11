@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.6](///compare/v1.0.5...v1.0.6) (2021-04-11)
+
+
+### Bug Fixes
+
+* properly handle empty string e948e09, closes #11
+
 ### [1.0.5](///compare/v1.0.4...v1.0.5) (2020-12-12)
 
 
