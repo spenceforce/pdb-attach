@@ -2,7 +2,7 @@ import pdb
 from types import FrameType
 from typing import Any, Callable, List, TypeVar, Union
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 def _skip_windows(f: F) -> F: ...
 

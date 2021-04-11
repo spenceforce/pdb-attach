@@ -59,7 +59,7 @@ def run_function(func, commands):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    out, err = p_client.communicate('\n'.join(commands).encode())
+    out, err = p_client.communicate("\n".join(commands).encode())
 
     # If the commands were executed by the debugger, then this will return.
     p_serv.join()

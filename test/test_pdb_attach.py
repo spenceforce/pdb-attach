@@ -13,28 +13,31 @@ from skip import skip_windows
 def test_detach():
     """Test the debugger goes to the next line then detaches."""
     inp = io.StringIO("detach\n")
-    debugger = pdb_detach.PdbDetach(stdin=inp, stdout=open(os.devnull, "w"))  # noqa: SIM115
-    debugger.set_trace()
-    assert True  # If pdb quits this will never be reached.
+    with open(os.devnull, "w") as f:
+        debugger = pdb_detach.PdbDetach(stdin=inp, stdout=f)
+        debugger.set_trace()
+        assert True  # If pdb quits this will never be reached.
 
 
 def test_state_changes():
     """Test the state changes that happen in the debugger persist."""
     val = False
     inp = io.StringIO("val = True\ndetach\n")
-    debugger = pdb_detach.PdbDetach(stdin=inp, stdout=open(os.devnull, "w"))  # noqa: SIM115
-    debugger.set_trace()
-    assert val is True
+    with open(os.devnull, "w") as f:
+        debugger = pdb_detach.PdbDetach(stdin=inp, stdout=f)
+        debugger.set_trace()
+        assert val is True
 
 
 def test_correct_detach_line():
     """Test line after set_trace is not executed after the debugger detaches."""
     val = False
     inp = io.StringIO("n\nval = True\ndetach\n")
-    debugger = pdb_detach.PdbDetach(stdin=inp, stdout=open(os.devnull, "w"))  # noqa: SIM115
-    debugger.set_trace()
-    val = False
-    assert val is True
+    with open(os.devnull, "w") as f:
+        debugger = pdb_detach.PdbDetach(stdin=inp, stdout=f)
+        debugger.set_trace()
+        val = False
+        assert val is True
 
 
 @skip_windows
@@ -69,7 +72,8 @@ def test_precmd_handler_runs():
         return line
 
     inp = io.StringIO("detach\n")
-    debugger = pdb_detach.PdbDetach(stdin=inp, stdout=open(os.devnull, "w"))  # noqa: SIM115
-    debugger.attach_precmd_handler(precmd)
-    debugger.set_trace()
-    assert val[0] is True
+    with open(os.devnull, "w") as f:
+        debugger = pdb_detach.PdbDetach(stdin=inp, stdout=f)
+        debugger.attach_precmd_handler(precmd)
+        debugger.set_trace()
+        assert val[0] is True
