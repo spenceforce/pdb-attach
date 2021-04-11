@@ -6,8 +6,6 @@ A python debugger that can attach to running processes.
 
 > :exclamation: pdb-attach does not work on processes where it hasn't been imported and set up. If you just discovered this package and hope to use it on an already running process, you will need to restart the program with pdb-attach listening. Another option is to use `gdb` which can attach to a running python process, more information can be found [here](https://wiki.python.org/moin/DebuggingWithGdb). The catch with using `gdb` is that it doesn't step through the python source code, but instead steps through the C code running the python program. Your mileage may vary with `gdb`.
 
-> :exclamation: This code is in alpha phase. The basic functionality is tested, but corner cases haven't been. If this causes your program to exit prematurely I'm sorry. Fault tolerance is the next step on the road map.
-
 This package was made in response to frustration over debugging long running processes. Wouldn't it be nice to just attach pdb to a running python program and see what's going on? Well that's exactly what pdb-attach does.
 
 ## Installation ##
