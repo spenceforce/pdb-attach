@@ -10,22 +10,63 @@ try:
 except ImportError:
     from test.support import find_unused_port
 
+import pytest
+
 from context import pdb_attach
 from skip import skip_windows
 
 
-def infinite_loop(port, channel):
+def infinite_loop():
     """Run an infinite loop."""
-    pdb_attach.listen(port)
     keep_running = True
-
-    # Signal this process is listening
-    channel.put(1)
 
     while keep_running:
         pass
 
-    pdb_attach.unlisten()
+
+def run_function(func, commands):
+    """Runs the function in a separate process with `pdb-attach` and sends it commands.
+
+    Args
+    ----
+    func: A function to run in a separate process with `pdb-attach`.
+    commands: A list of strings that will be entered as commands to `pdb-attach`.
+
+    Return
+    ------
+    The output from `pdb-attach` as a tuple (stdout, stderr).
+    """
+    # Wrap function with pdb_attach listening.
+    def _func(port, channel):
+        pdb_attach.listen(port)
+        channel.put(1)
+        func()
+        pdb_attach.unlisten()
+
+    channel = Queue()
+    # Get an unused port.
+    port = find_unused_port()
+
+    # Run an infinite loop with that port.
+    p_serv = Process(target=_func, args=(port, channel))
+    p_serv.start()
+
+    # Wait for the server to signal it's ready to connect.
+    channel.get()
+
+    # Run pdb_attach as a module.
+    p_client = subprocess.Popen(
+        ["python", "-m", "pdb_attach", str(p_serv.pid), str(port)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    out, err = p_client.communicate('\n'.join(commands).encode())
+
+    # If the commands were executed by the debugger, then this will return.
+    p_serv.join()
+
+    return out, err
 
 
 @skip_windows
@@ -34,31 +75,20 @@ def test_end_to_end():
 
     It should change the running value to False and detach.
     """
-    channel = Queue()
-    # Get an unused port.
-    port = find_unused_port()
-
-    # Run an infinite loop with that port.
-    p_serv = Process(target=infinite_loop, args=(port, channel))
-    p_serv.start()
-
-    # Wait for the server to signal it's ready to connect.
-    channel.get()
-
-    # Run pdb_attach as a module with the stdin pointing to the input file.
-    p_client = subprocess.Popen(
-        ["python", "-m", "pdb_attach", str(p_serv.pid), str(port)],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    out, err = p_client.communicate(b"keep_running = False\ndetach\n")
-    if len(err) > 0:
-        print(err)
-
-    # If the commands were executed by the debugger, then this will return.
-    p_serv.join()
+    commands = ["keep_running = False", "detach"]
+    out, _ = run_function(infinite_loop, commands)
+    # If this point is reached in execution, that means the infinite loop
+    # was terminated by changing the value through the debugger.
 
     # Ensure the prompt is output to the client.
     assert len(out) > 0
+    assert b"(Pdb)" in out
+
+
+@skip_windows
+def test_empty_input():
+    """Test empty string doesn't throw error."""
+    commands = ["", "keep_running = False", "detach"]
+    out, _ = run_function(infinite_loop, commands)
+
     assert b"(Pdb)" in out
