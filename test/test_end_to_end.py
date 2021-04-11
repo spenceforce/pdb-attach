@@ -10,8 +10,6 @@ try:
 except ImportError:
     from test.support import find_unused_port
 
-import pytest
-
 from context import pdb_attach
 from skip import skip_windows
 
@@ -25,7 +23,7 @@ def infinite_loop():
 
 
 def run_function(func, commands):
-    """Runs the function in a separate process with `pdb-attach` and sends it commands.
+    """Run the function in a separate process with `pdb-attach` and send it commands.
 
     Args
     ----
