@@ -48,7 +48,8 @@ while True:
         # Ignore flake8 warning about input in Python 2.7 since we are checking for raw_input first.
         to_server = input("".join(lines))  # noqa: S322
 
-    if to_server[-1] != "\n":
+    if len(to_server) == 0 or to_server[-1] != "\n":
         to_server += "\n"
 
     client_io.write(to_server)
+    client_io.flush()
