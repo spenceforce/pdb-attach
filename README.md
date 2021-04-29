@@ -41,7 +41,7 @@ The policy on python version support is to support all active versions of python
 
 ## Usage ##
 
-> :warning: pdb-attach uses sockets to communicate with the running process where `pdb` is actually being executed. While the window to connect to that process is very small, there is always the possibility that a bad actor that has access to your machine can connect to that port before you do. Since `pdb` is an interactive session with the process, this would give them the ability to inspect the source code of the running process, modify state of the running process, and **_run python code as you!_** That is bad and now you've been warned.
+> :warning: pdb-attach uses sockets to communicate with the running process where `pdb` is actually being executed. There is always the possibility that a bad actor that has access to your machine can connect to that port before you do. Since `pdb` is an interactive session with the process, this would give them the ability to inspect the source code of the running process, modify state of the running process, and **_run python code as you!_** That is bad and now you've been warned.
 >
 > Having said that, there are a few planned features that can mitigate this problem.
 > 1. Using a secret key known to the running process and the user so that only messages signed with that key will be executed.
