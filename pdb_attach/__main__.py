@@ -1,15 +1,10 @@
 # -*- mode: python -*-
 """Pdb-attach client that can be run as a module."""
 import argparse
-import os
-import signal
-import socket
-import sys
 
 from .client import PdbClient
-from ._prompt import PROMPT
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "pid", type=int, metavar="PID", help="The pid of the process to debug."

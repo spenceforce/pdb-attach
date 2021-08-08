@@ -3,9 +3,9 @@
 import os
 import signal
 import socket
-import sys
 
 from ._prompt import PROMPT
+
 
 class PdbClient(object):
     """Front end that communicates with the PDB server.
@@ -53,8 +53,8 @@ class PdbClient(object):
         cmd
             The command to send to the PDB server.
         """
-        if len(cmd) == 0 or cmd[-1] != '\n':
-            cmd += '\n'
+        if len(cmd) == 0 or cmd[-1] != "\n":
+            cmd += "\n"
 
         self._client_io.write(cmd)
         self._client_io.flush()
@@ -110,10 +110,10 @@ class PdbClient(object):
         lines, closed = self.recv()
         while closed is False:
             try:
-                to_server = raw_input(lines) # #type: ignore
+                to_server = raw_input(lines)  # type: ignore
             except NameError:
                 # Ignore flake8 warning about input in Python 2.7 since we are checking for raw_input first.
-                to_server = input(lines) # noqa:S322
+                to_server = input(lines)  # noqa:S322
 
             lines, closed = self.send_and_recv(to_server)
 

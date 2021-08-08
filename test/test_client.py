@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import errno
-import io
 import signal
 import socket
 from multiprocessing import Process, Queue
@@ -71,9 +70,7 @@ def run_server(close_on_connect=False):
             try:
                 serv, _ = sock.accept()
             except socket.error as e:
-                if e.errno == errno.EINTR:
-                    continue
-                else:
+                if e.errno != errno.EINTR:
                     raise
             else:
                 break
