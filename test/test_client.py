@@ -20,6 +20,7 @@ except ImportError:
 import pytest
 
 from context import pdb_client, PROMPT
+from skip import skip_windows
 
 CLOSED = "closed"
 CONNECTED = "connected"
@@ -111,6 +112,7 @@ def run_server(close_on_connect=False):
     return (p_serv, port, channels)
 
 
+@skip_windows
 def test_connect():
     """Test client sends signal and connects to server."""
     proc, port, channels = run_server()
@@ -132,6 +134,7 @@ def test_connect():
     proc.terminate()
 
 
+@skip_windows
 def test_send_cmd_and_recv():
     """Test client sends commands properly."""
     proc, port, channels = run_server()
@@ -160,6 +163,7 @@ def test_send_cmd_and_recv():
     proc.terminate()
 
 
+@skip_windows
 def test_recv_closed():
     """Test client returns `True` when the connectin is closed."""
     proc, port, channels = run_server(close_on_connect=True)
