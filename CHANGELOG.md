@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](///compare/v1.0.6...v1.1.0) (2021-08-08)
+
+
+### Features
+
+* client side API b6b5116, closes #12
+
 ### [1.0.6](///compare/v1.0.5...v1.0.6) (2021-04-11)
 
 
