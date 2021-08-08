@@ -30,7 +30,7 @@ def test_state_changes():
 
 
 def test_correct_detach_line():
-    """Test line after set_trace is not executed after the debugger detaches."""
+    """Test line after set_trace is superceded after the debugger detaches."""
     val = False
     inp = io.StringIO("n\nval = True\ndetach\n")
     with open(os.devnull, "w") as f:
