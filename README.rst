@@ -10,9 +10,9 @@ pdb-attach
 
 A python debugger that can attach to running processes.
 
-..
+.. note::
 
-   :exclamation: pdb-attach does not work on processes where it hasn't been imported and set up. If you just discovered this package and hope to use it on an already running process, you will need to restart the program with pdb-attach listening. Another option is to use ``gdb`` which can attach to a running python process, more information can be found `here <https://wiki.python.org/moin/DebuggingWithGdb>`_. The catch with using ``gdb`` is that it doesn't step through the python source code, but instead steps through the C code running the python program. Your mileage may vary with ``gdb``.
+   pdb-attach does not work on processes where it hasn't been imported and set up. If you just discovered this package and hope to use it on an already running process, you will need to restart the program with pdb-attach listening. Another option is to use ``gdb`` which can attach to a running python process, more information can be found `here <https://wiki.python.org/moin/DebuggingWithGdb>`_. The catch with using ``gdb`` is that it doesn't step through the python source code, but instead steps through the C code running the python program. Your mileage may vary with ``gdb``.
 
 
 This package was made in response to frustration over debugging long running processes. Wouldn't it be nice to just attach pdb to a running python program and see what's going on? Well that's exactly what pdb-attach does.
@@ -34,9 +34,9 @@ Supports OSes that implement POSIX only.
 
 Unfortunately pdb-attach doesn't work on Windows. It's an artifact of the implementation using signals to prompt the remote debugger to accept a socket connection. I would like to support Windows in the future, but because of how Windows handles signals, it will require a different implementation that doesn't rely on signals.
 
-..
+.. warning::
 
-   :warning: On Windows, pdb-attach is still importable, but ``listen`` won't do anything. Instead a warning will be raised on import and when ``listen`` is called.
+   On Windows, pdb-attach is still importable, but ``listen`` won't do anything. Instead a warning will be raised on import and when ``listen`` is called.
 
 
 Python versions
@@ -59,9 +59,9 @@ The policy on python version support is to support all active versions of python
 Usage
 -----
 
-..
+.. warning::
 
-   :warning: pdb-attach uses sockets to communicate with the running process where ``pdb`` is actually being executed. There is always the possibility that a bad actor that has access to your machine can connect to that port before you do. Since ``pdb`` is an interactive session with the process, this would give them the ability to inspect the source code of the running process, modify state of the running process, and **\ *run python code as you!*\ ** That is bad and now you've been warned.
+   pdb-attach uses sockets to communicate with the running process where ``pdb`` is actually being executed. There is always the possibility that a bad actor that has access to your machine can connect to that port before you do. Since ``pdb`` is an interactive session with the process, this would give them the ability to inspect the source code of the running process, modify state of the running process, and **\ *run python code as you!*\ ** That is bad and now you've been warned.
 
    Having said that, there are a few planned features that can mitigate this problem.
 
