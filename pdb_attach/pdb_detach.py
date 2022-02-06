@@ -1,7 +1,5 @@
 # -*- mode: python -*-
 """Detachable debugger."""
-from __future__ import print_function
-
 import logging
 import functools
 import pdb
