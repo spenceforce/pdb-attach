@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](///compare/v1.1.0...v2.0.0) (2022-02-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* listen and unlisten functions have moved, breaking the API.
+
+* seperate server, signal, and detach functionality c6a4861
+
 ## [1.1.0](///compare/v1.0.6...v1.1.0) (2021-08-08)
 
 
