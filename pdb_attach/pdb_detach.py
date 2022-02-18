@@ -1,39 +1,11 @@
 # -*- mode: python -*-
 """Detachable debugger."""
 import logging
-import functools
 import pdb
-import platform
-import signal
-import socket
-import warnings
-
-
-def _skip_windows(f):
-    def _pass(*args, **kwargs):
-        warnings.warn(
-            "{} was called on a Windows platform, so it does nothing.".format(
-                f.__name__
-            ),
-            UserWarning,
-        )
-
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        if platform.system() == "Windows":
-            _pass(*args, **kwargs)
-        else:
-            f(*args, **kwargs)
-
-    return wrapper
 
 
 class PdbDetach(pdb.Pdb):
     """PdbDetach extends Pdb to allow for detaching the debugger."""
-
-    # Set use_rawinput to False to defer io to file object arguments passed to
-    # stdin and stdout.
-    use_rawinput = False
 
     def __init__(self, *args, **kwargs):
         pdb.Pdb.__init__(self, *args, **kwargs)
@@ -78,46 +50,3 @@ def precmd_logger(line):
     """Log incoming line to the debug logger."""
     logging.debug(line)
     return line
-
-
-class _Handler(object):
-    """Signal handler that starts the debugger."""
-
-    def __init__(self, port, original_handler):
-        self.original_handler = original_handler
-
-        self.sock = socket.socket()
-        self.sock.bind(("localhost", port))
-        self.sock.listen(1)
-
-    def __call__(self, signum, frame):
-        serv, _ = self.sock.accept()
-        try:
-            sock_io = serv.makefile("rw", buffering=1)
-        except TypeError:
-            # Unexpected keyword argument. Try bufsize.
-            sock_io = serv.makefile("rw", bufsize=1)
-        debugger = PdbDetach(stdin=sock_io, stdout=sock_io)
-        debugger.set_trace(frame)
-
-    def close(self):
-        self.sock.close()
-
-
-@_skip_windows
-def listen(port):
-    """Initialize the handler to start a debugging session."""
-    if isinstance(port, str):
-        port = int(port)
-
-    handler = _Handler(port, signal.getsignal(signal.SIGUSR2))
-    signal.signal(signal.SIGUSR2, handler)
-
-
-@_skip_windows
-def unlisten():
-    """Stop listening."""
-    cur_sig = signal.getsignal(signal.SIGUSR2)
-    if isinstance(cur_sig, _Handler):
-        cur_sig.close()
-        signal.signal(signal.SIGUSR2, cur_sig.original_handler)

@@ -5,4 +5,6 @@ import platform
 import pytest
 
 
-skip_windows = pytest.mark.skipif(platform.system() == "Windows", reason="Lacks Windows support.")
+skip_windows = pytest.mark.skipif(
+    platform.system() == "Windows", reason="Lacks Windows support."
+)
