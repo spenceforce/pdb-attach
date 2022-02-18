@@ -25,7 +25,7 @@ class PdbSignal(PdbServer, PdbDetach):
         if platform.system() == "Windows":
             warnings.warn(
                 "{} was called on a Windows platform, so it does nothing.".format(
-                    f.__name__
+                    cls.listen.__name__
                 ),
                 UserWarning,
             )
@@ -40,7 +40,7 @@ class PdbSignal(PdbServer, PdbDetach):
         if platform.system() == "Windows":
             warnings.warn(
                 "{} was called on a Windows platform, so it does nothing.".format(
-                    f.__name__
+                    cls.unlisten.__name__
                 ),
                 UserWarning,
             )
