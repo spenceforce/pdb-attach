@@ -4,7 +4,7 @@ import os
 import platform
 import warnings
 
-from .pdb_detach import listen, unlisten
+from .pdb_signal import PdbSignal
 
 __all__ = ["listen", "unlisten"]
 
@@ -19,3 +19,13 @@ if platform.system() == "Windows":
         ),
         UserWarning,
     )
+
+
+def listen(port):
+    """Start listening on port."""
+    PdbSignal.listen(port)
+
+
+def unlisten():
+    """Stop listening."""
+    PdbSignal.unlisten()
