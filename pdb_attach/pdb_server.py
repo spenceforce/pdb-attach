@@ -21,7 +21,7 @@ class PdbServer(pdb.Pdb):
         if "stdout" in kwargs:
             del kwargs["stdout"]
 
-        super(PdbServer, self).__init__(*args, **kwargs)
+        pdb.Pdb.__init__(self, *args, **kwargs)
 
     def set_trace(self, frame=None):
         """Accept the connection to the client and start tracing the program."""
@@ -32,7 +32,7 @@ class PdbServer(pdb.Pdb):
             # Unexpected keyword argument. Try bufsize.
             sock_io = serv.makefile("rw", bufsize=1)
         self.stdin = self.stdout = sock_io
-        super(PdbServer, self).set_trace(frame)
+        pdb.Pdb.set_trace(self, frame)
 
     def close(self):
         """Close the connection."""
