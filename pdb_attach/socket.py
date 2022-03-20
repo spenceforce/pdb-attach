@@ -141,18 +141,3 @@ class PdbClient(object):
         """
         self.send_cmd(cmd)
         return self.recv()
-
-    def interactive_loop(self):
-        """Communicate with the Pdb server interactively."""
-        lines, closed = self.recv()
-        while closed is False:
-            try:
-                to_server = raw_input(lines)  # type: ignore
-            except NameError:
-                # Ignore flake8 warning about input in Python 2.7 since we are checking for raw_input first.
-                to_server = input(lines)  # noqa:S322
-
-            lines, closed = self.send_and_recv(to_server)
-
-        if len(lines) > 0:
-            print(lines)
