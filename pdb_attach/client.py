@@ -4,7 +4,7 @@ import os
 import signal
 import socket
 
-from ._prompt import PROMPT
+from pdb_attach._prompt import PROMPT
 
 
 class PdbClient(object):

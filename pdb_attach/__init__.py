@@ -4,7 +4,7 @@ import os
 import platform
 import warnings
 
-from .pdb_signal import PdbSignal
+from pdb_attach.signal import PdbSignal
 
 __all__ = ["listen", "unlisten"]
 

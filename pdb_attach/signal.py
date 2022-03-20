@@ -4,8 +4,8 @@ import platform
 import signal
 import warnings
 
-from .pdb_detach import PdbDetach
-from .pdb_server import PdbServer
+from pdb_attach.detach import PdbDetach
+from pdb_attach.socket import PdbServer
 
 
 class PdbSignal(PdbServer, PdbDetach):

@@ -1,5 +1,5 @@
-from .pdb_detach import PdbDetach
-from .pdb_server import PdbServer
+from pdb_attach.detach import PdbDetach
+from pdb_attach.socket import PdbServer
 from types import FrameType
 from typing import Any, Callable, Union
 
