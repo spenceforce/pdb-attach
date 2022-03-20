@@ -1,5 +1,5 @@
 from pdb_attach.detach import PdbDetach
-from pdb_attach.socket import PdbServer
+from pdb_attach.socket import PdbClient, PdbServer
 from types import FrameType
 from typing import Any, Callable, Union
 
@@ -10,3 +10,7 @@ class PdbSignal(PdbServer, PdbDetach):
     def listen(cls, port: Union[int, str], *args: Any, **kwargs: Any) -> None: ...
     @classmethod
     def unlisten(cls) -> None: ...
+
+
+class PdbSignaler(PdbClient):
+    def connect(self) -> None: ...
