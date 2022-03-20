@@ -1,8 +1,6 @@
 # -*- mode: python -*-
 """Debugger that uses sockets for I/O."""
-import os
 import pdb
-import signal
 import socket
 
 from pdb_attach._prompt import PROMPT
@@ -72,7 +70,6 @@ class PdbClient(object):
 
     def connect(self):
         """Connect to the PDB server."""
-        os.kill(self.server_pid, signal.SIGUSR2)
         self._client = socket.create_connection(("localhost", self.port))
         try:
             self._client_io = self._client.makefile("rw", buffering=1)

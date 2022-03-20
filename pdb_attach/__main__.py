@@ -2,7 +2,7 @@
 """Pdb-attach client that can be run as a module."""
 import argparse
 
-from pdb_attach.socket import PdbClient
+from pdb_attach.signal import PdbSignaler
 
 if "__main__" == __name__:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -17,7 +17,7 @@ if "__main__" == __name__:
     )
     args = parser.parse_args()
 
-    client = PdbClient(args.pid, args.port)
+    client = PdbSignaler(args.pid, args.port)
     client.connect()
     lines, closed = client.recv()
     while closed is False:

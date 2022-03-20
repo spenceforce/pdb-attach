@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import errno
 import io
-import signal
 import socket
 from multiprocessing import Process, Queue
 try:
@@ -28,8 +27,7 @@ CONNECTED = "connected"
 LISTENING = "listening"
 SERV_RECEIVED = "received"
 SERV_SENT = "sent"
-SIGNAL = "signal"
-CHANNEL_OUTPUTS = [CLOSED, CONNECTED, LISTENING, SERV_RECEIVED, SERV_SENT, SIGNAL]
+CHANNEL_OUTPUTS = [CLOSED, CONNECTED, LISTENING, SERV_RECEIVED, SERV_SENT]
 
 
 def test_stdin_stdout_ignored():
@@ -64,11 +62,6 @@ def run_server(close_on_connect=False):
     """
 
     def _run_server(port, channels, close_on_connect=False):
-        # Ignore SIGUSR2.
-        signal.signal(
-            signal.SIGUSR2, lambda signum, frame: channels[SIGNAL].put(SIGNAL)
-        )
-
         # Set up server.
         sock = socket.socket()
         sock.bind(("localhost", port))
@@ -129,11 +122,6 @@ def test_connect():
     client = pdb_socket.PdbClient(proc.pid, port)
     client.connect()
 
-    try:
-        assert channels[SIGNAL].get(timeout=5) == SIGNAL
-    except queue.Empty:
-        proc.terminate()
-        pytest.fail("Signal was not sent to server.")
     try:
         assert channels[CONNECTED].get(timeout=5) == CONNECTED
     except queue.Empty:

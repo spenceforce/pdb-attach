@@ -1,11 +1,12 @@
 # -*- mode: python -*-
 """Signal handler for starting the debugger."""
+import os
 import platform
 import signal
 import warnings
 
 from pdb_attach.detach import PdbDetach
-from pdb_attach.socket import PdbServer
+from pdb_attach.socket import PdbClient, PdbServer
 
 
 class PdbSignal(PdbServer, PdbDetach):
@@ -50,3 +51,12 @@ class PdbSignal(PdbServer, PdbDetach):
         if isinstance(cur_handler, cls):
             cur_handler.close()
             signal.signal(signal.SIGUSR2, cur_handler._old_handler)
+
+
+class PdbSignaler(PdbClient):
+    """PdbSignaler sends a signal to the process running the debugger."""
+
+    def connect(self):
+        """Send a signal before connecting."""
+        os.kill(self.server_pid, signal.SIGUSR2)
+        PdbClient.connect(self)
