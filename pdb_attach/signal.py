@@ -14,8 +14,8 @@ class PdbSignal(PdbServer, PdbDetach):
 
     def __init__(self, old_handler, port, *args, **kwargs):
         self._old_handler = old_handler
-        PdbServer.__init__(self, port, *args, **kwargs)
         PdbDetach.__init__(self, *args, **kwargs)
+        PdbServer.__init__(self, port, *args, **kwargs)
 
     def __call__(self, signum, frame):
         """Start tracing the program."""

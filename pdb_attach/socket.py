@@ -7,21 +7,34 @@ import socket
 
 from pdb_attach._prompt import PROMPT
 
-class PdbStr(str):
+
+class _PdbStr(str):
     """Special string that indicates if it is a prompt."""
+
     def __new__(cls, value, prompt=False):
         self = str.__new__(cls, value)
-        self.is_prompt = prompt
+        self._is_prompt = prompt
         return self
+
+    @property
+    def is_prompt(self):
+        return self._is_prompt
+
 
 class PdbIOWrapper(io.TextIOBase):
     """Wrapper for socket IO.
 
     Allows for smoother IPC. Data sent over socket is formatted `<msg_size>|<code>|<msg_text>`.
     """
-    def __init__(self, io_obj):
-        self._buffer = ""
-        self._io_obj = io_obj
+
+    def __init__(self, sock):
+        self._buffer = self._new_buffer()
+        self._sock = sock
+        try:
+            self._io = self._sock.makefile("rw", buffering=1)
+        except TypeError:
+            # Unexpected keyword argument. Try bufsize.
+            self._io = self._sock.makefile("rw", bufsize=1)  # type: ignore
 
     _TEXT = 0
     _PROMPT = 1
@@ -29,56 +42,62 @@ class PdbIOWrapper(io.TextIOBase):
 
     @property
     def encoding(self):
-        return self._io_obj.encoding
+        return self._io.encoding
 
     @property
     def errors(self):
-        return self._io_obj.errors
+        return self._io.errors
 
     @property
     def newlines(self):
-        return self._io_obj.newlines
+        return self._io.newlines
 
     @property
     def buffer(self):
-        return self._io_obj.buffer
+        return self._io.buffer
 
     @staticmethod
-    def _format_msg(msg):
-        return "{}|{}".format(len(msg), msg)
+    def _format_msg(msg, code):
+        return "{}|{}|{}".format(len(msg), code, msg)
+
+    def _new_buffer(self):
+        return ""
 
     def detach(self):
         self._buffer = None
-        return self._io_obj.detach()
+        return self._io.detach()
 
     def _read(self):
         """Read from the socket."""
         msg_size = ""
         while True:
-            msg_size += self._io_obj.read(1)
+            msg_size += self._io.read(1)
             if len(msg_size) == 0:
-                return
+                return _PdbStr("")
 
             if msg_size[-1] == "|":
                 msg_size = int(msg_size[:-1])
                 break
-        self._buffer += self._io_obj.read(msg_size)
+        code = self._io.read(2)
+        code = int(code[:-1])
+        msg = _PdbStr(self._io.read(msg_size), prompt=(code == 1))
+        return msg
 
     def _read_eof(self):
         while True:
             prev_buf_size = len(self._buffer)
-            self._read()
+            self._buffer += self._read()
             if len(self._buffer) == prev_buf_size:
                 break
 
     def read(self, size=-1):
         if size is None or size < 0:
             self._read_eof()
-            rv, self._buffer = self._buffer, ""
+            rv, self._buffer = self._buffer, self._new_buffer()
             return rv
 
         while len(self._buffer) < size:
-            self._read()
+            self._buffer += self._read()
 
         rv, self._buffer = self._buffer[:size], self._buffer[size:]
         return rv
@@ -89,7 +108,7 @@ class PdbIOWrapper(io.TextIOBase):
             if size >= 0 and buf_size >= size:
                 break
 
-            self._read()
+            self._buffer += self._read()
 
             if len(self._buffer) == buf_size:
                 break
@@ -106,16 +125,36 @@ class PdbIOWrapper(io.TextIOBase):
         rv, self._buffer = self._buffer[:idx], self._buffer[idx:]
         return rv
 
+    def read_prompt(self):
+        """Read everything until a prompt is received and return it.
+
+        Returns
+        -------
+        (str, bool) : A tuple containing the str output from the connection and
+            a bool indicating if the connection is closed.
+        """
+        closed = False
+        while True:
+            msg = self._read()
+            self._buffer += msg
+            if len(msg) == 0 or msg.is_prompt:
+                break
+
+        rv, self._buffer = self._buffer, self._new_buffer()
+        return rv, len(msg) == 0
+
     def write(self, msg):
-        f = open("TEST.txt", "w")
-        f.write(msg)
-        msg = self._format_msg(msg)
-        f.write(msg)
-        write_n = self._io_obj.write(msg)
-        return write_n - len(msg[:msg.index("|") + 1])
+        if not isinstance(msg, _PdbStr):
+            msg = _PdbStr(msg)
+        msg = self._format_msg(msg, code=(1 if msg.is_prompt else 0))
+        write_n = self._io.write(msg)
+        # Offset num bytes written by the additional characters in the formatted
+        # message.
+        return write_n - len(msg[: msg.index("|") + 3])
 
     def flush(self):
-        return self._io_obj.flush()
+        return self._io.flush()
+
 
 class PdbServer(pdb.Pdb):
     """PdbServer extends Pdb for communication via sockets."""
@@ -135,16 +174,12 @@ class PdbServer(pdb.Pdb):
             del kwargs["stdout"]
 
         pdb.Pdb.__init__(self, *args, **kwargs)
-        self.prompt = PdbStr(self.prompt, prompt=True)
+        self.prompt = _PdbStr(self.prompt, prompt=True)
 
     def set_trace(self, frame=None):
         """Accept the connection to the client and start tracing the program."""
         serv, _ = self._sock.accept()
-        try:
-            sock_io = PdbIOWrapper(serv.makefile("rw", buffering=1))
-        except TypeError:
-            # Unexpected keyword argument. Try bufsize.
-            sock_io = PdbIOWrapper(serv.makefile("rw", bufsize=1))
+        sock_io = PdbIOWrapper(serv)
         self.stdin = self.stdout = sock_io
         pdb.Pdb.set_trace(self, frame)
 
@@ -183,11 +218,7 @@ class PdbClient(object):
     def connect(self):
         """Connect to the PDB server."""
         self._client = socket.create_connection(("localhost", self.port))
-        try:
-            self._client_io = PdbIOWrapper(self._client.makefile("rw", buffering=1))
-        except TypeError:
-            # Python 2.7 compatibility. Try bufsize.
-            self._client_io = PdbIOWrapper(self._client.makefile("rw", bufsize=1))  # type: ignore
+        self._client_io = PdbIOWrapper(self._client)
 
     def send_cmd(self, cmd):
         """Send command to the PDB server.
@@ -212,26 +243,10 @@ class PdbClient(object):
 
         Returns
         -------
-        str
-            Output from the PDB server.
-        bool
-            True if the connection has been closed.
+        (str, bool) : A tuple containing the str output from the connection and
+            a bool indicating if the connection is closed.
         """
-        closed = False
-        lines = []
-        while True:
-            # If output sent from the server does not end with a newline, it must
-            # be the prompt, in which case, that is the minimum length needed to
-            # read.
-            line = self._client_io.readline(len(PROMPT))
-            lines.append(line)
-            if line == PROMPT:
-                break
-            if line == "":
-                closed = True
-                break
-
-        return "".join(lines), closed
+        return self._client_io.read_prompt()
 
     def send_and_recv(self, cmd):
         """Send command to the PDB server and receive the output.
