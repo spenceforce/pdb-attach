@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import os
 import subprocess
-from multiprocessing import Process, Queue
+import time
 
 try:
     from test.support.socket_helper import find_unused_port
@@ -15,79 +15,104 @@ from context import pdb_attach
 from skip import skip_windows
 
 
-def infinite_loop():
-    """Run an infinite loop."""
-    keep_running = True
-
-    while keep_running:
-        pass
+pdb_path = os.path.abspath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir)
+)
 
 
-def run_function(func, commands):
-    """Run the function in a separate process with `pdb-attach` and send it commands.
+def run_script(script_input):
+    """Runs pdb-attach from the command line.
 
-    Args
-    ----
-    func: A function to run in a separate process with `pdb-attach`.
-    commands: A list of strings that will be entered as commands to `pdb-attach`.
+    Parameters
+    ----------
+    script_input
+        Which input file to use with the script.
 
-    Return
-    ------
-    The output from `pdb-attach` as a tuple (stdout, stderr).
+    Returns
+    -------
+    [str] : Lines of actual output.
+    bool : True if the script finished executing.
     """
-    # Wrap function with pdb_attach listening.
-    def _func(port, channel):
-        pdb_attach.listen(port)
-        channel.put(1)
-        func()
-        pdb_attach.unlisten()
+    input_file = "test/end_to_end/input/{}.txt".format(script_input)
 
-    channel = Queue()
-    # Get an unused port.
     port = find_unused_port()
+    env = os.environ.copy()
 
-    # Run an infinite loop with that port.
-    p_serv = Process(target=_func, args=(port, channel))
-    p_serv.start()
+    if len(env.get("PYTHONPATH", "")) == 0:
+        env["PYTHONPATH"] = pdb_path
+    else:
+        env["PYTHONPATH"] += os.pathsep + pdb_path
 
-    # Wait for the server to signal it's ready to connect.
-    channel.get()
-
-    # Run pdb_attach as a module.
-    p_client = subprocess.Popen(
-        ["python", "-m", "pdb_attach", str(p_serv.pid), str(port)],
-        stdin=subprocess.PIPE,
+    script = subprocess.Popen(
+        ["python", "test/end_to_end/script.py", str(port)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=env,
     )
-    out, err = p_client.communicate(os.linesep.join(commands).encode())
+    time.sleep(1)  # Give the script time to set up the server.
 
-    # If the commands were executed by the debugger, then this will return.
-    p_serv.join()
+    with open(input_file) as f:
+        client = subprocess.Popen(
+            ["python", "-m" "pdb_attach", str(script.pid), str(port)],
+            stdin=f,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        out, err = client.communicate()
 
-    return out, err
+    output = out.decode().split(os.linesep)
+
+    assert len(err) == 0
+
+    out, err = script.communicate()
+    assert len(err) == 0
+
+    return output, out.decode() == "done" + os.linesep
+
+
+expected_detach = os.linesep.join(
+    [
+        "> /path/to/pdb-attach/test/end_to_end/script.py(12)<module>()",
+        "-> while running: pass",
+        "(Pdb)   7  	",
+        "  8  	pdb_attach.listen(port)",
+        "  9  	",
+        " 10  	running = True",
+        " 11  	",
+        " 12  ->	while running: pass",
+        " 13  	",
+        ' 14  	print("done", flush=True)',
+        "[EOF]",
+        "(Pdb) (Pdb) ",
+    ]
+).replace("/path/to/pdb-attach", pdb_path)
 
 
 @skip_windows
-def test_end_to_end():
-    """Test client commands are honored.
+def test_end_to_end_detach():
+    actual_lines, done = run_script("detach")
 
-    It should change the running value to False and detach.
-    """
-    commands = ["keep_running = False", "detach"]
-    out, _ = run_function(infinite_loop, commands)
-    # If this point is reached in execution, that means the infinite loop
-    # was terminated by changing the value through the debugger.
+    for expected, actual in zip(expected_detach.split(os.linesep), actual_lines):
+        assert expected == actual
 
-    # Ensure the prompt is output to the client.
-    assert len(out) > 0
-    assert b"(Pdb)" in out
+    assert done is True
+
+
+expected_empty = os.linesep.join(
+    [
+        "> /path/to/pdb-attach/test/end_to_end/script.py(12)<module>()",
+        "-> while running: pass",
+        "(Pdb) (Pdb) (Pdb) ",
+    ]
+).replace("/path/to/pdb-attach", pdb_path)
 
 
 @skip_windows
-def test_empty_input():
-    """Test empty string doesn't throw error."""
-    commands = ["", "keep_running = False", "detach"]
-    out, _ = run_function(infinite_loop, commands)
+def test_end_to_end_empty():
+    actual_lines, done = run_script("empty")
 
-    assert b"(Pdb)" in out
+    for expected, actual in zip(expected_empty.split(os.linesep), actual_lines):
+        assert expected == actual
+
+    assert done is True

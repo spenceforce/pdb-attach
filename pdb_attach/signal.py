@@ -54,7 +54,25 @@ class PdbSignal(PdbServer, PdbDetach):
 
 
 class PdbSignaler(PdbClient):
-    """PdbSignaler sends a signal to the process running the debugger."""
+    """PdbSignaler sends a signal to the process running the debugger.
+
+    Parameters
+    ----------
+    pid
+        PID of the running process to connect to.
+    port
+        Port of the running process to connect to.
+
+    Attributes
+    ----------
+    server_pid
+        PID of the running process to connect to.
+    """
+
+    def __init__(self, pid, port):
+        self.server_pid = pid
+
+        PdbClient.__init__(self, port)
 
     def connect(self):
         """Send a signal before connecting."""

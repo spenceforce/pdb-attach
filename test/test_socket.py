@@ -2,16 +2,9 @@
 """PdbServer tests."""
 from __future__ import unicode_literals
 
-import errno
 import io
 import os
 import socket
-from multiprocessing import Process, Queue
-
-try:
-    import queue
-except ImportError:
-    import Queue as queue
 
 try:
     from test.support.socket_helper import find_unused_port
@@ -20,16 +13,16 @@ except ImportError:
 
 import pytest
 
-from context import pdb_socket, PROMPT
-from skip import skip_windows
+from context import pdb_socket
 
 
-CLOSED = "closed"
-CONNECTED = "connected"
-LISTENING = "listening"
-SERV_RECEIVED = "received"
-SERV_SENT = "sent"
-CHANNEL_OUTPUTS = [CLOSED, CONNECTED, LISTENING, SERV_RECEIVED, SERV_SENT]
+@pytest.fixture
+def server():
+    port = find_unused_port()
+    sock = socket.socket()
+    sock.bind(("localhost", port))
+    sock.listen(0)
+    return (port, sock)
 
 
 def test_pdbstr_is_prompt():
@@ -128,7 +121,6 @@ def test_wrapper_write():
     msg = "hello world"
     expected_msg = "{}|0|{}".format(len(msg), msg)
     assert pdb_io.write(msg) == len(msg)
-    pdb_io.flush()
     assert sock2.read(len(expected_msg)) == expected_msg
 
 
@@ -138,7 +130,6 @@ def test_wrapper_read_prompt():
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
     msg = pdb_socket._PdbStr("prompt", prompt=True)
     pdb_io1.write(msg)
-    pdb_io1.flush()
     prompt, _ = pdb_io2.read_prompt()
     assert prompt == msg
 
@@ -149,12 +140,20 @@ def test_wrapper_read_prompt_eof():
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
     msg = "hello world"
     pdb_io1.write(msg)
-    pdb_io1.flush()
     pdb_io1.detach()
     sock1.close()
     prompt, closed = pdb_io2.read_prompt()
     assert prompt == msg
     assert closed is True
+
+
+def test_wrapper_raises_eoferror():
+    sock1, sock2 = socket.socketpair()
+    pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
+    pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
+    pdb_io1.raise_eoferror()
+    with pytest.raises(EOFError):
+        pdb_io2.read()
 
 
 def test_stdin_stdout_ignored():
@@ -165,135 +164,78 @@ def test_stdin_stdout_ignored():
     assert debugger.stdout is not io_out
 
 
-def run_server(close_on_connect=False):
-    """Run a simple socket server.
-
-    Parameters
-    ----------
-    close_on_connect
-        Close the connection immediately after it's been established.
-
-    Returns
-    -------
-    multiprocess.Process
-        Process running the server.
-    int
-        Port of the server.
-    dict
-        Mapping from channel outputs to the corresponding channels those outputs
-        will be sent through.
-
-    Notes
-    -----
-    It is the callers responsibility to kill the process.
-    """
-
-    def _run_server(port, channels, close_on_connect=False):
-        # Set up server.
-        sock = socket.socket()
-        sock.bind(("localhost", port))
-        sock.listen(1)
-        channels[LISTENING].put(LISTENING)
-
-        # Wait for connection.
-        while True:
-            try:
-                serv, _ = sock.accept()
-            except socket.error as e:
-                if e.errno != errno.EINTR:
-                    raise
-            else:
-                break
-        channels[CONNECTED].put(CONNECTED)
-
-        if close_on_connect is True:
-            # This is mainly to test how the client responds to a closed
-            # connection.
-            serv.close()
-            channels[CLOSED].put(CLOSED)
-            return
-
-        pdb_io = pdb_socket.PdbIOWrapper(serv)
-
-        line = ""
-        msg = 0
-        while line not in ["quit", "q"]:
-            output = "Message {}\n{}".format(msg, PROMPT)
-            pdb_io.write("Message {}\n".format(msg))
-            pdb_io.write(pdb_socket._PdbStr(PROMPT, prompt=True))
-            channels[SERV_SENT].put(output)
-            msg += 1
-
-            line = pdb_io.readline()
-            channels[SERV_RECEIVED].put(line)
-
-    channels = {out: Queue() for out in CHANNEL_OUTPUTS}
-    port = find_unused_port()
-    p_serv = Process(target=_run_server, args=(port, channels, close_on_connect))
-    p_serv.start()
-
-    # Ensure server is listening.
-    channels[LISTENING].get()
-
-    return (p_serv, port, channels)
-
-
-@skip_windows
-def test_connect():
-    """Test client sends signal and connects to server."""
-    proc, port, channels = run_server()
-
-    client = pdb_socket.PdbClient(proc.pid, port)
-    client.connect()
-
-    try:
-        assert channels[CONNECTED].get(timeout=5) == CONNECTED
-    except queue.Empty:
-        proc.terminate()
-        pytest.fail("Failed to connect to the server.")
-
-    proc.terminate()
-
-
-@skip_windows
-def test_send_cmd_and_recv():
+def test_send(server):
     """Test client sends commands properly."""
-    proc, port, channels = run_server()
-
-    client = pdb_socket.PdbClient(proc.pid, port)
+    port, serv = server
+    client = pdb_socket.PdbClient(port)
     client.connect()
-
-    command = "command"
-    client.send_cmd(command)
-
-    try:
-        assert channels[SERV_RECEIVED].get(timeout=5) == command + os.linesep
-    except queue.Empty:
-        proc.terminate()
-        pytest.fail("Server did not receive command.")
-
-    from_server, closed = client.recv()
-    try:
-        assert channels[SERV_SENT].get(timeout=5) == from_server
-    except queue.Empty:
-        proc.terminate()
-        pytest.fail("Server did not send output.")
-
-    assert closed is False
-
-    proc.terminate()
+    sock, _ = serv.accept()
+    serv_io = pdb_socket.PdbIOWrapper(sock)
+    msg = "hello world"
+    client.send(msg)
+    assert serv_io.readline() == msg + os.linesep
+    msg = "hellow world\n"
+    client.send(msg)
+    assert serv_io.readline() == msg
 
 
-@skip_windows
-def test_recv_closed():
-    """Test client returns `True` when the connectin is closed."""
-    proc, port, channels = run_server(close_on_connect=True)
-
-    client = pdb_socket.PdbClient(proc.pid, port)
+def test_recv(server):
+    """Test client receives output properly."""
+    port, serv = server
+    client = pdb_socket.PdbClient(port)
     client.connect()
+    sock, _ = serv.accept()
+    serv_io = pdb_socket.PdbIOWrapper(sock)
+    msg = "hello world\n"
+    serv_io.write(msg)
+    prompt = pdb_socket._PdbStr("prompt", prompt=True)
+    serv_io.write(prompt)
+    recv_msg, closed = client.recv()
+    assert recv_msg == msg + prompt
+    assert not closed
 
-    # Wait for the server to close the connection.
-    channels[CLOSED].get()
 
+def test_recv_closed(server):
+    """Test client returns `True` when the connection is closed."""
+    port, serv = server
+    client = pdb_socket.PdbClient(port)
+    client.connect()
+    sock, _ = serv.accept()
+    serv_io = pdb_socket.PdbIOWrapper(sock)
+
+    sock.shutdown(socket.SHUT_RDWR)
+    sock.close()
     _, closed = client.recv()
     assert closed is True
+
+
+def test_interact_write():
+    sock1, sock2 = socket.socketpair()
+    pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
+    pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
+    interact = pdb_socket.PdbInteractiveConsole(pdb_io1)
+    msg = "hello world"
+    interact.write(msg)
+    assert pdb_io2.read(len(msg)) == msg
+
+
+def test_interact_raw_input():
+    sock1, sock2 = socket.socketpair()
+    pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
+    pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
+    interact = pdb_socket.PdbInteractiveConsole(pdb_io1)
+    msg = "hello world\n"
+    prompt = ">>> "
+    pdb_io2.write(msg)
+    assert interact.raw_input(prompt) == msg
+    assert pdb_io2.read_prompt() == (prompt, False)
+
+
+def test_interact_eoferror():
+    sock1, sock2 = socket.socketpair()
+    pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
+    pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
+    interact = pdb_socket.PdbInteractiveConsole(pdb_io1)
+    pdb_io2.raise_eoferror()
+    with pytest.raises(EOFError):
+        interact.raw_input()

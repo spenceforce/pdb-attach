@@ -1,9 +1,5 @@
 import pdb
-from typing import Any, Callable, List, TypeVar
-
-F = TypeVar("F", bound=Callable[..., Any])
-
-def _skip_windows(f: F) -> F: ...
+from typing import Any, Callable, List
 
 class PdbDetach(pdb.Pdb):
     _precmd_handlers: List[Callable[[str], str]] = ...
