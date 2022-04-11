@@ -84,7 +84,7 @@ def test_wrapper_readline():
     """Test the IO wrappers `readline` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
-    msg = "hello world\n"
+    msg = "hello world" + os.linesep
     sock2.send("{}|0|{}".format(len(msg), msg).encode())
     assert pdb_io.readline() == msg
 
@@ -93,7 +93,7 @@ def test_wrapper_readline_newline_before_size():
     """Test the IO wrappers `readline` method reads a newline first."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
-    msg = "hello world\n"
+    msg = "hello world" + os.linesep
     sock2.send("{}|0|{}".format(len(msg), msg).encode())
     assert pdb_io.readline(len(msg) + 1) == msg
 
@@ -102,7 +102,7 @@ def test_wrapper_readline_one():
     """Test the IO wrappers `readline` method with a fixed size."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
-    msg = "hello world\n"
+    msg = "hello world" + os.linesep
     sock2.send("{}|0|{}".format(len(msg), msg).encode())
     assert pdb_io.readline(1) == msg[0]
 
@@ -180,7 +180,7 @@ def test_send(server):
     msg = "hello world"
     client.send(msg)
     assert serv_io.readline() == msg + os.linesep
-    msg = "hellow world\n"
+    msg = "hellow world" + os.linesep
     client.send(msg)
     assert serv_io.readline() == msg
 
@@ -192,7 +192,7 @@ def test_recv(server):
     client.connect()
     sock, _ = serv.accept()
     serv_io = pdb_socket.PdbIOWrapper(sock)
-    msg = "hello world\n"
+    msg = "hello world" + os.linesep
     serv_io.write(msg)
     prompt = pdb_socket._PdbStr("prompt", prompt=True)
     serv_io.write(prompt)
@@ -231,7 +231,7 @@ def test_interact_raw_input():
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
     interact = pdb_socket.PdbInteractiveConsole(pdb_io1)
-    msg = "hello world\n"
+    msg = "hello world" + os.linesep
     prompt = ">>> "
     pdb_io2.write(msg)
     assert interact.raw_input(prompt) == msg
