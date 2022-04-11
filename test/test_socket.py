@@ -16,14 +16,30 @@ import pytest
 from context import pdb_socket
 
 
-@pytest.fixture()
-def server():
-    """Return a port and a socket server listening on that port."""
+def _server():
     port = find_unused_port()
     sock = socket.socket()
     sock.bind(("localhost", port))
     sock.listen(0)
     return (port, sock)
+
+
+def _socketpair():
+    """Fallback for missing `socket.socketpair`."""
+    port, serv = _server()
+    sock1 = socket.create_connection(("localhost", port))
+    sock2, _ = serv.accept()
+    return sock1, sock2
+
+
+if not hasattr(socket, "socketpair"):
+    socket.socketpair = _socketpair
+
+
+@pytest.fixture()
+def server():
+    """Return a port and a socket server listening on that port."""
+    return _server()
 
 
 def test_pdbstr_is_prompt():
