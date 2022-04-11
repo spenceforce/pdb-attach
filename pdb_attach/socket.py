@@ -52,18 +52,22 @@ class PdbIOWrapper(io.TextIOBase):
 
     @property
     def encoding(self):
+        """Return the name of the stream encoding."""
         return self._io.encoding
 
     @property
     def errors(self):
+        """Return the error setting."""
         return self._io.errors
 
     @property
     def newlines(self):
+        """Return the newlines used by the stream."""
         return self._io.newlines
 
     @property
     def buffer(self):
+        """Return the stream buffer."""
         return self._io.buffer
 
     @staticmethod
@@ -74,6 +78,7 @@ class PdbIOWrapper(io.TextIOBase):
         return ""
 
     def detach(self):
+        """Detach the stream buffer and return it."""
         self._buffer = None
         return self._io.detach()
 
@@ -110,6 +115,17 @@ class PdbIOWrapper(io.TextIOBase):
                 break
 
     def read(self, size=-1):
+        """Read `size` characters or until EOF is reached.
+
+        Parameters
+        ----------
+        size : int
+            The number of characters to return. If negative, reads until EOF.
+
+        Returns
+        -------
+        str
+        """
         if size is None or size < 0:
             self._read_eof()
             rv, self._buffer = self._buffer, self._new_buffer()
@@ -125,6 +141,18 @@ class PdbIOWrapper(io.TextIOBase):
         return rv
 
     def readline(self, size=-1):
+        """Read a string until a newline or EOF is reached.
+
+        Parameters
+        ----------
+        size : int
+            The number of characters to read. If `size` characters are read before
+            a newline is seen, then `size` characters are returned.
+
+        Returns
+        -------
+        str
+        """
         while os.linesep not in self._buffer:
             if size >= 0 and len(self._buffer) >= size:
                 break
@@ -155,7 +183,6 @@ class PdbIOWrapper(io.TextIOBase):
         (str, bool) : A tuple containing the str output from the connection and
             a bool indicating if the connection is closed.
         """
-        closed = False
         while True:
             msg, code = self._read()
             self._buffer += msg
@@ -166,11 +193,22 @@ class PdbIOWrapper(io.TextIOBase):
         return rv, code == self._CLOSED
 
     def raise_eoferror(self):
-        """Send EOFError code through socket."""
+        """Send `EOFError` code through socket."""
         self._io.write(self._format_msg("", self._EOFERROR))
         self.flush()
 
     def write(self, msg):
+        """Write `msg` to the socket and return the number of bytes sent.
+
+        Parameters
+        ----------
+        msg : str
+            A string to send through the socket.
+
+        Returns
+        -------
+        int : The number of bytes written to the socket.
+        """
         if not isinstance(msg, _PdbStr):
             msg = _PdbStr(msg)
         msg = self._format_msg(
@@ -183,21 +221,38 @@ class PdbIOWrapper(io.TextIOBase):
         return write_n - len(msg[: msg.index("|") + 3])
 
     def flush(self):
+        """Flush the socket."""
         return self._io.flush()
 
 
 class PdbInteractiveConsole(code.InteractiveConsole):
     """An interactive console for Pdb client/server communication."""
 
-    def __init__(self, pdb_io, locals=None, filename="<console>"):
+    def __init__(self, pdb_io, locals=None, filename="<console>"):  # noqa: A002
         code.InteractiveConsole.__init__(self, locals, filename)
         self._io = pdb_io
 
     def raw_input(self, prompt=""):
+        """Write `prompt` and read a line.
+
+        Parameters
+        ----------
+        prompt : str
+
+        Returns
+        -------
+        str : An input line.
+        """
         self.write(_PdbStr(prompt, prompt=True))
         return self._io.readline()
 
     def write(self, data):
+        """Write `data` to the underlying IO object.
+
+        Parameters
+        ----------
+        data : str
+        """
         self._io.write(data)
         self._io.flush()
 
@@ -235,7 +290,9 @@ class PdbServer(pdb.Pdb):
         ns = self.curframe.f_globals.copy()
         ns.update(self.curframe_locals)
         console = PdbInteractiveConsole(self.stdin, ns)
-        with _replace_stdout(self.stdout) as s:
+        # The interactive interpreter uses `exec` under the hood. `exec` outputs to
+        # sys.stdout so sys.stdout needs to be replaced with the IO object pdb is using.
+        with _replace_stdout(self.stdout) as _:
             console.interact("*interactive*")
 
     def close(self):
@@ -270,12 +327,13 @@ class PdbClient(object):
         self._client = socket.create_connection(("localhost", self.port))
         self._client_io = PdbIOWrapper(self._client)
 
-    def _recv_eof_flush(self):
-        """Receive output flushed from the PDB server when EOFError is raised."""
-        return self._client_io.read_eof_flush()
-
     def raise_eoferror(self):
-        """Call underlying IO obj `raise_eoferror`"""
+        """Send `EOFError` to server and return output from server.
+
+        Returns
+        -------
+        str
+        """
         self._client_io.raise_eoferror()
         return self.recv()
 

@@ -11,7 +11,6 @@ try:
 except ImportError:
     from test.support import find_unused_port
 
-from context import pdb_attach
 from skip import skip_windows
 
 
@@ -21,7 +20,7 @@ pdb_path = os.path.abspath(
 
 
 def run_script(script_input):
-    """Runs pdb-attach from the command line.
+    """Run pdb-attach from the command line.
 
     Parameters
     ----------
@@ -91,6 +90,7 @@ expected_detach = os.linesep.join(
 
 @skip_windows
 def test_end_to_end_detach():
+    """Test the `detach` command."""
     actual_lines, done = run_script("detach")
 
     for expected, actual in zip(expected_detach.split(os.linesep), actual_lines):
@@ -110,6 +110,7 @@ expected_empty = os.linesep.join(
 
 @skip_windows
 def test_end_to_end_empty():
+    """Test an empty line."""
     actual_lines, done = run_script("empty")
 
     for expected, actual in zip(expected_empty.split(os.linesep), actual_lines):

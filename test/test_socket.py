@@ -16,8 +16,9 @@ import pytest
 from context import pdb_socket
 
 
-@pytest.fixture
+@pytest.fixture()
 def server():
+    """Return a port and a socket server listening on that port."""
     port = find_unused_port()
     sock = socket.socket()
     sock.bind(("localhost", port))
@@ -26,6 +27,7 @@ def server():
 
 
 def test_pdbstr_is_prompt():
+    """Test `_PdbStr` prompt is `True`."""
     data = "hello world"
     s = pdb_socket._PdbStr(data, True)
     assert s == data
@@ -33,6 +35,7 @@ def test_pdbstr_is_prompt():
 
 
 def test_pdbstr_is_not_prompt():
+    """Test `_PdbStr` prompt is `False`."""
     data = "hello world"
     s = pdb_socket._PdbStr(data)
     assert s == data
@@ -40,6 +43,7 @@ def test_pdbstr_is_not_prompt():
 
 
 def test_wrapper_detach():
+    """Test the IO wrappers `detach` method."""
     sock, _ = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock)
     assert pdb_io.buffer is not None
@@ -48,6 +52,7 @@ def test_wrapper_detach():
 
 
 def test_wrapper_read():
+    """Test the IO wrappers `read` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world"
@@ -56,6 +61,7 @@ def test_wrapper_read():
 
 
 def test_wrapper_read_one():
+    """Test the IO wrappers `read` method with a fixed size."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world"
@@ -64,6 +70,7 @@ def test_wrapper_read_one():
 
 
 def test_wrapper_read_chunks():
+    """Test the IO wrappers `read` method on chunks of data."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world"
@@ -73,6 +80,7 @@ def test_wrapper_read_chunks():
 
 
 def test_wrapper_read_eof():
+    """Test the IO wrappers `read` method reads to EOF."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world"
@@ -82,6 +90,7 @@ def test_wrapper_read_eof():
 
 
 def test_wrapper_readline():
+    """Test the IO wrappers `readline` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world\n"
@@ -90,6 +99,7 @@ def test_wrapper_readline():
 
 
 def test_wrapper_readline_newline_before_size():
+    """Test the IO wrappers `readline` method reads a newline first."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world\n"
@@ -98,6 +108,7 @@ def test_wrapper_readline_newline_before_size():
 
 
 def test_wrapper_readline_one():
+    """Test the IO wrappers `readline` method with a fixed size."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world\n"
@@ -106,6 +117,7 @@ def test_wrapper_readline_one():
 
 
 def test_wrapper_readline_eof():
+    """Test the IO wrappers `readline` method reads to EOF."""
     sock1, sock2 = socket.socketpair()
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
     msg = "hello world"
@@ -115,6 +127,7 @@ def test_wrapper_readline_eof():
 
 
 def test_wrapper_write():
+    """Test the IO wrappers `write` method."""
     sock1, sock2 = socket.socketpair()
     sock2 = sock2.makefile("rw")
     pdb_io = pdb_socket.PdbIOWrapper(sock1)
@@ -125,6 +138,7 @@ def test_wrapper_write():
 
 
 def test_wrapper_read_prompt():
+    """Test the IO wrappers `read_prompt` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
@@ -135,6 +149,7 @@ def test_wrapper_read_prompt():
 
 
 def test_wrapper_read_prompt_eof():
+    """Test the IO wrappers `read_prompt` method reads until EOF."""
     sock1, sock2 = socket.socketpair()
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
@@ -148,6 +163,7 @@ def test_wrapper_read_prompt_eof():
 
 
 def test_wrapper_raises_eoferror():
+    """Test the IO wrappers `raise_eoferror` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
@@ -201,7 +217,6 @@ def test_recv_closed(server):
     client = pdb_socket.PdbClient(port)
     client.connect()
     sock, _ = serv.accept()
-    serv_io = pdb_socket.PdbIOWrapper(sock)
 
     sock.shutdown(socket.SHUT_RDWR)
     sock.close()
@@ -210,6 +225,7 @@ def test_recv_closed(server):
 
 
 def test_interact_write():
+    """Test the interactive consoles `write` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
@@ -220,6 +236,7 @@ def test_interact_write():
 
 
 def test_interact_raw_input():
+    """Test the interactive consoles `raw_input` method."""
     sock1, sock2 = socket.socketpair()
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
@@ -232,6 +249,7 @@ def test_interact_raw_input():
 
 
 def test_interact_eoferror():
+    """Test the interactive consoles raises `EOFError` when one is sent through the socket."""
     sock1, sock2 = socket.socketpair()
     pdb_io1 = pdb_socket.PdbIOWrapper(sock1)
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
