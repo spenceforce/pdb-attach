@@ -1,5 +1,4 @@
-from __future__ import print_function
-import sys
+import os, sys
 
 port = int(sys.argv[1])
 
@@ -11,4 +10,5 @@ running = True
 
 while running: pass
 
-print("done", flush=True)
+sys.stdout.write("done" + os.linesep)
+sys.stdout.flush()

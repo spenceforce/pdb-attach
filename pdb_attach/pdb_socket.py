@@ -9,6 +9,12 @@ import socket
 import sys
 
 
+if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
+    SocketError = OSError
+else:
+    SocketError = socket.error
+
+
 @contextlib.contextmanager
 def _replace_stdout(stdout):
     old_stdout = sys.stdout
@@ -39,11 +45,6 @@ class PdbIOWrapper(io.TextIOBase):
     def __init__(self, sock):
         self._buffer = self._new_buffer()
         self._sock = sock
-        try:
-            self._io = self._sock.makefile("rw", buffering=1)
-        except TypeError:
-            # Unexpected keyword argument. Try bufsize.
-            self._io = self._sock.makefile("rw", bufsize=1)  # type: ignore
 
     _CLOSED = -1
     _TEXT = 0
@@ -53,34 +54,18 @@ class PdbIOWrapper(io.TextIOBase):
     @property
     def encoding(self):
         """Return the name of the stream encoding."""
-        return self._io.encoding
+        return sys.getdefaultencoding()
 
     @property
     def errors(self):
         """Return the error setting."""
-        return self._io.errors
+        return "strict"
 
-    @property
-    def newlines(self):
-        """Return the newlines used by the stream."""
-        return self._io.newlines
-
-    @property
-    def buffer(self):
-        """Return the stream buffer."""
-        return self._io.buffer
-
-    @staticmethod
-    def _format_msg(msg, code):
-        return "{}|{}|{}".format(len(msg), code, msg)
+    def _format_msg(self, msg, code):
+        return "{}|{}|{}".format(len(msg), code, msg).encode(self.encoding, self.errors)
 
     def _new_buffer(self):
         return ""
-
-    def detach(self):
-        """Detach the stream buffer and return it."""
-        self._buffer = None
-        return self._io.detach()
 
     def _read(self):
         """Read from the socket.
@@ -89,23 +74,23 @@ class PdbIOWrapper(io.TextIOBase):
         -------
         (_PdbStr, code)
         """
-        msg_size = ""
-        while True:
-            msg_size += self._io.read(1)
-            if len(msg_size) == 0:
+        msg_data = ""
+        while msg_data.count("|") < 2:
+            c = self._sock.recv(1)
+            if len(c) == 0:
                 return _PdbStr(""), self._CLOSED
 
-            if msg_size[-1] == "|":
-                msg_size = int(msg_size[:-1])
-                break
-        code = self._io.read(2)
-        code = int(code[:-1])
+            msg_data += c.decode(self.encoding, self.errors)
+
+        msg_data_items = msg_data.split("|")
+        msg_size = int(msg_data_items[0])
+        code = int(msg_data_items[1])
         if code == self._EOFERROR:
-            self.flush()
             raise EOFError
 
-        msg = _PdbStr(self._io.read(msg_size), prompt=(code == self._PROMPT))
-        return msg, code
+        msg = self._sock.recv(msg_size).decode(self.encoding, self.errors)
+        return_code = code if len(msg) == msg_size else self._CLOSED
+        return (_PdbStr(msg, prompt=(code == self._PROMPT)), return_code)
 
     def _read_eof(self):
         while True:
@@ -193,9 +178,18 @@ class PdbIOWrapper(io.TextIOBase):
         return rv, code == self._CLOSED
 
     def raise_eoferror(self):
-        """Send `EOFError` code through socket."""
-        self._io.write(self._format_msg("", self._EOFERROR))
-        self.flush()
+        """Send `EOFError` code through socket.
+
+        Returns
+        -------
+        bool : True if send was successful.
+        """
+        try:
+            self._sock.sendall(self._format_msg("", self._EOFERROR))
+        except SocketError:
+            return False
+        else:
+            return True
 
     def write(self, msg):
         """Write `msg` to the socket and return the number of bytes sent.
@@ -211,18 +205,16 @@ class PdbIOWrapper(io.TextIOBase):
         """
         if not isinstance(msg, _PdbStr):
             msg = _PdbStr(msg)
-        msg = self._format_msg(
-            msg, code=(self._PROMPT if msg.is_prompt else self._TEXT)
-        )
-        write_n = self._io.write(msg)
-        self.flush()
+        code = (self._PROMPT if msg.is_prompt else self._TEXT)
+        data = self._format_msg(msg, code=code)
+        try:
+            self._sock.sendall(data)
+        except SocketError:
+            return 0
+
         # Offset num bytes written by the additional characters in the formatted
         # message.
-        return write_n - len(msg[: msg.index("|") + 3])
-
-    def flush(self):
-        """Flush the socket."""
-        return self._io.flush()
+        return len(msg)
 
 
 class PdbInteractiveConsole(code.InteractiveConsole):
@@ -254,7 +246,6 @@ class PdbInteractiveConsole(code.InteractiveConsole):
         data : str
         """
         self._io.write(data)
-        self._io.flush()
 
 
 class PdbServer(pdb.Pdb):
@@ -332,9 +323,12 @@ class PdbClient(object):
 
         Returns
         -------
-        str
+        (str, bool) : A tuple containing the str output from the connection and
+            a bool indicating if the connection is closed.
         """
-        self._client_io.raise_eoferror()
+        closed = self._client_io.raise_eoferror()
+        if closed is True:
+            return "", closed
         return self.recv()
 
     def send_cmd(self, cmd):
@@ -351,7 +345,6 @@ class PdbClient(object):
             cmd += "\n"
 
         self._client_io.write(cmd)
-        self._client_io.flush()
 
     send = send_cmd
 

@@ -72,16 +72,17 @@ def run_script(script_input):
 
 expected_detach = os.linesep.join(
     [
-        "> /path/to/pdb-attach/test/end_to_end/script.py(12)<module>()",
+        "> /path/to/pdb-attach/test/end_to_end/script.py(11)<module>()",
         "-> while running: pass",
-        "(Pdb)   7  	",
-        "  8  	pdb_attach.listen(port)",
-        "  9  	",
-        " 10  	running = True",
-        " 11  	",
-        " 12  ->	while running: pass",
-        " 13  	",
-        ' 14  	print("done", flush=True)',
+        "(Pdb)   6  	",
+        "  7  	pdb_attach.listen(port)",
+        "  8  	",
+        "  9  	running = True",
+        " 10  	",
+        " 11  ->	while running: pass",
+        " 12  	",
+        ' 13  	sys.stdout.write("done" + os.linesep)',
+        " 14  	sys.stdout.flush()",
         "[EOF]",
         "(Pdb) (Pdb) ",
     ]
@@ -101,7 +102,7 @@ def test_end_to_end_detach():
 
 expected_empty = os.linesep.join(
     [
-        "> /path/to/pdb-attach/test/end_to_end/script.py(12)<module>()",
+        "> /path/to/pdb-attach/test/end_to_end/script.py(11)<module>()",
         "-> while running: pass",
         "(Pdb) (Pdb) (Pdb) ",
     ]

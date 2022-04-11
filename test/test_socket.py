@@ -42,15 +42,6 @@ def test_pdbstr_is_not_prompt():
     assert not s.is_prompt
 
 
-def test_wrapper_detach():
-    """Test the IO wrappers `detach` method."""
-    sock, _ = socket.socketpair()
-    pdb_io = pdb_socket.PdbIOWrapper(sock)
-    assert pdb_io.buffer is not None
-    pdb_io.detach()
-    assert pdb_io.buffer is None
-
-
 def test_wrapper_read():
     """Test the IO wrappers `read` method."""
     sock1, sock2 = socket.socketpair()
@@ -155,7 +146,6 @@ def test_wrapper_read_prompt_eof():
     pdb_io2 = pdb_socket.PdbIOWrapper(sock2)
     msg = "hello world"
     pdb_io1.write(msg)
-    pdb_io1.detach()
     sock1.close()
     prompt, closed = pdb_io2.read_prompt()
     assert prompt == msg

@@ -6,7 +6,7 @@ import signal
 import warnings
 
 from pdb_attach.detach import PdbDetach
-from pdb_attach.socket import PdbClient, PdbServer
+from pdb_attach.pdb_socket import PdbClient, PdbServer
 
 
 class PdbSignal(PdbServer, PdbDetach):

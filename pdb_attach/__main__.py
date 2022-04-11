@@ -2,7 +2,7 @@
 """Pdb-attach client that can be run as a module."""
 import argparse
 
-from pdb_attach.signal import PdbSignaler
+from pdb_attach.pdb_signal import PdbSignaler
 
 if "__main__" == __name__:
     parser = argparse.ArgumentParser(description=__doc__)
