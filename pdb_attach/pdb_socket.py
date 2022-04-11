@@ -120,7 +120,7 @@ class PdbIOWrapper(io.TextIOBase):
             msg, code = self._read()
             self._buffer += msg
             if code == self._CLOSED:
-                size = max(len(self._buffer), size)
+                size = min(len(self._buffer), size)
 
         rv, self._buffer = self._buffer[:size], self._buffer[size:]
         return rv
