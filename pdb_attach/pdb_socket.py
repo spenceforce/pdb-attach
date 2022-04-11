@@ -149,11 +149,11 @@ class PdbIOWrapper(io.TextIOBase):
                 break
 
         if size >= 0 and os.linesep in self._buffer:
-            idx = min(size, self._buffer.index(os.linesep) + 1)
+            idx = min(size, self._buffer.index(os.linesep) + len(os.linesep))
         elif size >= 0:
             idx = size
         elif os.linesep in self._buffer:
-            idx = self._buffer.index(os.linesep) + 1
+            idx = self._buffer.index(os.linesep) + len(os.linesep)
         else:
             idx = len(self._buffer)
 
