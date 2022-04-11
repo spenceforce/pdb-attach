@@ -326,9 +326,9 @@ class PdbClient(object):
         (str, bool) : A tuple containing the str output from the connection and
             a bool indicating if the connection is closed.
         """
-        closed = self._client_io.raise_eoferror()
-        if closed is True:
-            return "", closed
+        success = self._client_io.raise_eoferror()
+        if not success:
+            return "", True
         return self.recv()
 
     def send_cmd(self, cmd):
