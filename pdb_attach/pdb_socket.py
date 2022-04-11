@@ -341,8 +341,8 @@ class PdbClient(object):
         cmd
             The command to send to the PDB server.
         """
-        if len(cmd) == 0 or cmd[-1] != "\n":
-            cmd += "\n"
+        if not cmd.endswith(os.linesep):
+            cmd += os.linesep
 
         self._client_io.write(cmd)
 
