@@ -49,7 +49,7 @@ def run_script(script_input):
         stderr=subprocess.PIPE,
         env=env,
     )
-    time.sleep(1)  # Give the script time to set up the server.
+    time.sleep(5)  # Give the script time to set up the server.
 
     with open(input_file) as f:
         if is_windows:
