@@ -2,6 +2,7 @@
 """pdb-attach end to end tests."""
 from __future__ import unicode_literals
 
+import platform
 import os
 import subprocess
 import time
@@ -15,6 +16,8 @@ except ImportError:
 pdb_path = os.path.abspath(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir)
 )
+
+is_windows = platform.system() == "Windows"
 
 
 def run_script(script_input):
@@ -49,8 +52,12 @@ def run_script(script_input):
     time.sleep(1)  # Give the script time to set up the server.
 
     with open(input_file) as f:
+        if is_windows:
+            cmd = ["python", "-m" "pdb_attach", str(port)]
+        else:
+            cmd = ["python", "-m" "pdb_attach", str(script.pid), str(port)]
         client = subprocess.Popen(
-            ["python", "-m" "pdb_attach", str(script.pid), str(port)],
+            cmd,
             stdin=f,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

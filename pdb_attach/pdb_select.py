@@ -9,6 +9,7 @@ from pdb_attach.pdb_socket import PdbServer
 
 class PdbSelect(PdbServer, PdbDetach):
     """Pdb polling server."""
+
     def __init__(self, port, *args, **kwargs):
         PdbDetach.__init__(self, *args, **kwargs)
         PdbServer.__init__(self, port, *args, **kwargs)
@@ -18,6 +19,7 @@ class PdbSelect(PdbServer, PdbDetach):
         sys.settrace(self._trace)
 
     def __del__(self):
+        """Close the socket."""
         self.close()
 
     @classmethod

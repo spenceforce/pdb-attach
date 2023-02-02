@@ -2,7 +2,6 @@
 """pdb-attach is a python debugger that can attach to running processes."""
 import os
 import platform
-import warnings
 
 from pdb_attach.pdb_signal import PdbSignal
 from pdb_attach.pdb_select import PdbSelect
@@ -17,7 +16,6 @@ if platform.system() == "Windows":
         """Start listening on port."""
         PdbSelect.listen(port)
 
-
     def unlisten():
         """Stop listening."""
         PdbSelect.unlisten()
@@ -26,7 +24,6 @@ else:
     def listen(port):
         """Start listening on port."""
         PdbSignal.listen(port)
-
 
     def unlisten():
         """Stop listening."""
