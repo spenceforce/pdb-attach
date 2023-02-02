@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-"""PdbDetach tests."""
+"""PdbSignal tests."""
 from __future__ import unicode_literals
 
 import signal

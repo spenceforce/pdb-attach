@@ -5,6 +5,7 @@ import platform
 import warnings
 
 from pdb_attach.pdb_signal import PdbSignal
+from pdb_attach.pdb_select import PdbSelect
 
 __all__ = ["listen", "unlisten"]
 
@@ -12,20 +13,21 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "VERSION.txt"
     __version__ = f.read().strip()
 
 if platform.system() == "Windows":
-    warnings.warn(
-        (
-            "pdb-attach does not support Windows. listen() does nothing and the "
-            "pdb-attach client will not be able to attach to this process."
-        ),
-        UserWarning,
-    )
+    def listen(port):
+        """Start listening on port."""
+        PdbSelect.listen(port)
 
 
-def listen(port):
-    """Start listening on port."""
-    PdbSignal.listen(port)
+    def unlisten():
+        """Stop listening."""
+        PdbSelect.unlisten()
+
+else:
+    def listen(port):
+        """Start listening on port."""
+        PdbSignal.listen(port)
 
 
-def unlisten():
-    """Stop listening."""
-    PdbSignal.unlisten()
+    def unlisten():
+        """Stop listening."""
+        PdbSignal.unlisten()

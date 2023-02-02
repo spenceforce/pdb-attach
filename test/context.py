@@ -14,3 +14,4 @@ import pdb_attach
 import pdb_attach.detach as pdb_detach
 import pdb_attach.pdb_socket as pdb_socket
 import pdb_attach.pdb_signal as pdb_signal
+import pdb_attach.pdb_select as pdb_select
