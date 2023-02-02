@@ -16,6 +16,7 @@ class PdbSelect(PdbServer, PdbDetach):
         self._poller = select.poll()
         self._poller.register(self._sock, select.POLLIN)
         self._counter = 0
+        print("Setting sys trace")
         sys.settrace(self._trace)
 
     def __del__(self):
@@ -46,6 +47,7 @@ class PdbSelect(PdbServer, PdbDetach):
         elif len(fps) == 0:
             return self._trace
 
+        print("Setting trace")
         self.set_trace(frame)
 
     def do_detach(self, arg):

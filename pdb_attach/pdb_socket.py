@@ -270,6 +270,7 @@ class PdbServer(pdb.Pdb):
 
     def set_trace(self, frame=None):
         """Accept the connection to the client and start tracing the program."""
+        print("Accepting")
         serv, _ = self._sock.accept()
         sock_io = PdbIOWrapper(serv)
         self.stdin = self.stdout = sock_io
