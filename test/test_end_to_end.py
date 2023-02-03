@@ -66,6 +66,7 @@ def run_script(script_input):
         out, err = client.communicate()
 
     output = out.decode().split(os.linesep)
+    print(is_windows)
 
     assert len(err) == 0
 

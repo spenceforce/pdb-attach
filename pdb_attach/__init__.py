@@ -14,7 +14,6 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "VERSION.txt"
 if platform.system() == "Windows":
     def listen(port):
         """Start listening on port."""
-        print("Windows listening")
         PdbSelect.listen(port)
 
     def unlisten():
