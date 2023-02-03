@@ -24,7 +24,6 @@ if platform.system() == "Windows":
 else:
     def listen(port):
         """Start listening on port."""
-        print("Posix listening")
         PdbSignal.listen(port)
 
     def unlisten():
