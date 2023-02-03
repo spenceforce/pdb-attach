@@ -16,26 +16,12 @@ $ pip install pdb-attach
 
 ## Requirements ##
 
-### OS ###
-
-Supports OSes that implement POSIX only.
-
-Unfortunately pdb-attach doesn't work on Windows. It's an artifact of the implementation using signals to prompt the remote debugger to accept a socket connection. I would like to support Windows in the future, but because of how Windows handles signals, it will require a different implementation that doesn't rely on signals.
-
-> :warning: On Windows, pdb-attach is still importable, but `listen` won't do anything. Instead a warning will be raised on import and when `listen` is called.
-
 ### Python versions ###
 
 Currently supports:
 
 - 2.7
-- 3.3
-- 3.4
-- 3.5
-- 3.6
-- 3.7
-- 3.8
-- 3.9
+- 3.3+
 
 The policy on python version support is to support all active versions of python. For any version that has reached end of life, that version will continue to be supported for the last major release of pdb-attach it was a part of. New major releases of pdb-attach after a python version has been end of lifed may drop support for that version of python.
 

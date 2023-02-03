@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-"""PdbServer tests."""
+"""Pdb client/server tests."""
 from __future__ import unicode_literals
 
 import io

@@ -2,6 +2,7 @@
 """pdb-attach end to end tests."""
 from __future__ import unicode_literals
 
+import platform
 import os
 import subprocess
 import time
@@ -11,12 +12,12 @@ try:
 except ImportError:
     from test.support import find_unused_port
 
-from skip import skip_windows
-
 
 pdb_path = os.path.abspath(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir)
 )
+
+is_windows = platform.system() == "Windows"
 
 
 def run_script(script_input):
@@ -48,11 +49,15 @@ def run_script(script_input):
         stderr=subprocess.PIPE,
         env=env,
     )
-    time.sleep(1)  # Give the script time to set up the server.
+    time.sleep(5)  # Give the script time to set up the server.
 
     with open(input_file) as f:
+        if is_windows:
+            cmd = ["python", "-m" "pdb_attach", str(port)]
+        else:
+            cmd = ["python", "-m" "pdb_attach", str(script.pid), str(port)]
         client = subprocess.Popen(
-            ["python", "-m" "pdb_attach", str(script.pid), str(port)],
+            cmd,
             stdin=f,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -61,6 +66,7 @@ def run_script(script_input):
         out, err = client.communicate()
 
     output = out.decode().split(os.linesep)
+    print(is_windows)
 
     assert len(err) == 0
 
@@ -89,7 +95,6 @@ expected_detach = os.linesep.join(
 ).replace("/path/to/pdb-attach", pdb_path)
 
 
-@skip_windows
 def test_end_to_end_detach():
     """Test the `detach` command."""
     actual_lines, done = run_script("detach")
@@ -109,7 +114,6 @@ expected_empty = os.linesep.join(
 ).replace("/path/to/pdb-attach", pdb_path)
 
 
-@skip_windows
 def test_end_to_end_empty():
     """Test an empty line."""
     actual_lines, done = run_script("empty")

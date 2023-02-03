@@ -35,7 +35,6 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Operating System :: POSIX",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",

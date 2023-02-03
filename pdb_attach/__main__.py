@@ -1,14 +1,19 @@
 # -*- mode: python -*-
 """Pdb-attach client that can be run as a module."""
 import argparse
+import platform
 
 from pdb_attach.pdb_signal import PdbSignaler
+from pdb_attach.pdb_socket import PdbClient
+
+is_windows = platform.system() == "Windows"
 
 if "__main__" == __name__:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "pid", type=int, metavar="PID", help="The pid of the process to debug."
-    )
+    if not is_windows:
+        parser.add_argument(
+            "pid", type=int, metavar="PID", help="The pid of the process to debug."
+        )
     parser.add_argument(
         "port",
         type=int,
@@ -17,7 +22,11 @@ if "__main__" == __name__:
     )
     args = parser.parse_args()
 
-    client = PdbSignaler(args.pid, args.port)
+    if is_windows:
+        client = PdbClient(args.port)
+    else:
+        client = PdbSignaler(args.pid, args.port)
+
     client.connect()
     lines, closed = client.recv()
     while closed is False:
