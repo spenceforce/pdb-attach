@@ -2,6 +2,7 @@
 """Detachable debugger."""
 import logging
 import pdb
+import sys
 
 
 class PdbDetach(pdb.Pdb):
@@ -13,16 +14,8 @@ class PdbDetach(pdb.Pdb):
 
     def do_detach(self, arg):
         """Detach the debugger and continue running."""
-        # A couple notes:
-        # self.trace_dispatch is being set to None because bdb.py passes this
-        #     as the tracing function to sys.settrace as well as sets frames
-        #     f_trace property to it.
-        # self.set_continue() removes all tracing functions.
-        # self._set_stopinfo is called with no stop or return frames and a
-        #     stoplineno of -1 which tells bdb to not stop.
-        self.trace_dispatch = None  # type: ignore
+        self.clear_all_breaks()
         self.set_continue()
-        self._set_stopinfo(None, None, -1)  # type: ignore
         return True
 
     def precmd(self, line):

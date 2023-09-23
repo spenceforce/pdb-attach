@@ -216,6 +216,9 @@ class PdbIOWrapper(io.TextIOBase):
         # message.
         return len(msg)
 
+    def close(self):
+        self._sock.close()
+
 
 class PdbInteractiveConsole(code.InteractiveConsole):
     """An interactive console for Pdb client/server communication."""
@@ -287,9 +290,8 @@ class PdbServer(pdb.Pdb):
             console.interact("*interactive*")
 
     def close(self):
-        """Close the connection."""
-        self.stdin = self.stdout = None
-        self._sock.close()
+        """Close the connection to the client."""
+        self.stdin.close()
 
 
 class PdbClient(object):

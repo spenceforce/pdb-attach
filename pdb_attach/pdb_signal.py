@@ -52,6 +52,12 @@ class PdbSignal(PdbServer, PdbDetach):
             cur_handler.close()
             signal.signal(signal.SIGUSR2, cur_handler._old_handler)
 
+    def do_detach(self, arg):
+        """Detach and disconnect socket."""
+        rv = PdbDetach.do_detach(self, arg)
+        PdbServer.close(self)
+        return rv
+
 
 class PdbSignaler(PdbClient):
     """PdbSignaler sends a signal to the process running the debugger.
