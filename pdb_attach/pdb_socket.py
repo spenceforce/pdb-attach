@@ -205,7 +205,7 @@ class PdbIOWrapper(io.TextIOBase):
         """
         if not isinstance(msg, _PdbStr):
             msg = _PdbStr(msg)
-        code = (self._PROMPT if msg.is_prompt else self._TEXT)
+        code = self._PROMPT if msg.is_prompt else self._TEXT
         data = self._format_msg(msg, code=code)
         try:
             self._sock.sendall(data)

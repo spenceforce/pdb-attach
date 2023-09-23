@@ -15,10 +15,10 @@ if platform.system() == "Windows":
     warnings.warn(
         (
             "pdb-attach does not support Windows. listen() does nothing and the "
-            "pdb-attach client will not be able to attach to this process.",
-            stacklevel=1
+            "pdb-attach client will not be able to attach to this process."
         ),
         UserWarning,
+        stacklevel=1,
     )
 
 

@@ -30,7 +30,7 @@ class PdbSignal(PdbServer, PdbDetach):
                     cls.listen.__name__
                 ),
                 UserWarning,
-                stacklevel=1
+                stacklevel=1,
             )
             return
         old_handler = signal.getsignal(signal.SIGUSR2)
@@ -46,7 +46,7 @@ class PdbSignal(PdbServer, PdbDetach):
                     cls.unlisten.__name__
                 ),
                 UserWarning,
-                stacklevel=1
+                stacklevel=1,
             )
             return
         cur_handler = signal.getsignal(signal.SIGUSR2)
