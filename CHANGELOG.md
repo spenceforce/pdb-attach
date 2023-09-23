@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.0.1](///compare/v3.0.0...v3.0.1) (2023-09-23)
+
+
+### Bug Fixes
+
+* detach without hanging and free up server for new connections 528cb8a, closes #25
+
 ## [3.0.0](///compare/v2.0.0...v3.0.0) (2022-04-13)
 
 
