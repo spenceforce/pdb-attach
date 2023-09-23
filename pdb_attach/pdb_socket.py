@@ -205,7 +205,7 @@ class PdbIOWrapper(io.TextIOBase):
         """
         if not isinstance(msg, _PdbStr):
             msg = _PdbStr(msg)
-        code = (self._PROMPT if msg.is_prompt else self._TEXT)
+        code = self._PROMPT if msg.is_prompt else self._TEXT
         data = self._format_msg(msg, code=code)
         try:
             self._sock.sendall(data)
@@ -215,6 +215,10 @@ class PdbIOWrapper(io.TextIOBase):
         # Offset num bytes written by the additional characters in the formatted
         # message.
         return len(msg)
+
+    def close(self):
+        """Close connection to client."""
+        self._sock.close()
 
 
 class PdbInteractiveConsole(code.InteractiveConsole):
@@ -287,9 +291,8 @@ class PdbServer(pdb.Pdb):
             console.interact("*interactive*")
 
     def close(self):
-        """Close the connection."""
-        self.stdin = self.stdout = None
-        self._sock.close()
+        """Close the connection to the client."""
+        self.stdin.close()
 
 
 class PdbClient(object):

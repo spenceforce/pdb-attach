@@ -30,6 +30,7 @@ class PdbSignal(PdbServer, PdbDetach):
                     cls.listen.__name__
                 ),
                 UserWarning,
+                stacklevel=1,
             )
             return
         old_handler = signal.getsignal(signal.SIGUSR2)
@@ -45,12 +46,19 @@ class PdbSignal(PdbServer, PdbDetach):
                     cls.unlisten.__name__
                 ),
                 UserWarning,
+                stacklevel=1,
             )
             return
         cur_handler = signal.getsignal(signal.SIGUSR2)
         if isinstance(cur_handler, cls):
             cur_handler.close()
             signal.signal(signal.SIGUSR2, cur_handler._old_handler)
+
+    def do_detach(self, arg):
+        """Detach and disconnect socket."""
+        rv = PdbDetach.do_detach(self, arg)
+        PdbServer.close(self)
+        return rv
 
 
 class PdbSignaler(PdbClient):

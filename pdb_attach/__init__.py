@@ -18,6 +18,7 @@ if platform.system() == "Windows":
             "pdb-attach client will not be able to attach to this process."
         ),
         UserWarning,
+        stacklevel=1,
     )
 
 
