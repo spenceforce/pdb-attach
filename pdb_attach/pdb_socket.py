@@ -217,6 +217,7 @@ class PdbIOWrapper(io.TextIOBase):
         return len(msg)
 
     def close(self):
+        """Close connection to client."""
         self._sock.close()
 
 

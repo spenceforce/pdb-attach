@@ -2,7 +2,6 @@
 """Detachable debugger."""
 import logging
 import pdb
-import sys
 
 
 class PdbDetach(pdb.Pdb):
