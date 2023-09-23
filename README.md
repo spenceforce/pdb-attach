@@ -28,7 +28,7 @@ Unfortunately pdb-attach doesn't work on Windows. It's an artifact of the implem
 
 Currently supports:
 
-- 2.7
+- 2.7 (Github no longer supports CI workflows for 2.7; support will be dropped in the future)
 - 3.3
 - 3.4
 - 3.5
